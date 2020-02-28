@@ -1,0 +1,103 @@
+C51 COMPILER V9.00   MAIN                                                                  01/13/2016 15:20:30 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          //1、用导线将MCU的MCU_IO1---MCU_IO4分别连接到16*16LED的A0、A1、A2、A3。
+   2          //2、用导线将MCU的SDA、SCL、PWM0分别连接到16*16LED的SHCR、STCP、DS。
+   3          #include        <reg51.h>
+   4          unsigned char code  table0[] = {
+   5          //--  文字:  刘  --
+   6          //--  宋体12;  此字体下对应的点阵为：宽x高=16x16   -- 
+   7          0x00,0x00,0x04,0x40,0x08,0x41,0x90,0x49,0xF0,0x48,0x60,0x48,0x50,0x48,0x48,0x48,
+   8          0x84,0x48,0x80,0x48,0xFC,0x48,0x00,0x49,0x20,0x40,0x30,0x40,0x00,0x40,0x00,0x00,
+   9          //
+  10          0x00,0x00,0x04,0x40,0x08,0x41,0x90,0x49,0xF0,0x48,0x60,0x48,0x50,0x48,0x48,0x48,
+  11          0x84,0x48,0x80,0x48,0xFC,0x48,0x00,0x49,0x20,0x40,0x30,0x40,0x00,0x40,0x00,0x00,
+  12          //
+  13          0x00,0x00,0x04,0x40,0x08,0x41,0x90,0x49,0xF0,0x48,0x60,0x48,0x50,0x48,0x48,0x48,
+  14          0x84,0x48,0x80,0x48,0xFC,0x48,0x00,0x49,0x20,0x40,0x30,0x40,0x00,0x40,0x00,0x00,
+  15          //
+  16          0x00,0x00,0x04,0x40,0x08,0x41,0x90,0x49,0xF0,0x48,0x60,0x48,0x50,0x48,0x48,0x48,
+  17          0x84,0x48,0x80,0x48,0xFC,0x48,0x00,0x49,0x20,0x40,0x30,0x40,0x00,0x40,0x00,0x00
+  18          
+  19          };
+  20          
+  21          
+  22          unsigned char turn=0;
+  23          
+  24          sbit    SHCP = P1^1;
+  25          sbit    STCP = P1^2;
+  26          sbit    DS   = P1^3;
+  27          
+  28          
+  29          void WriteByte(char dat)          //写一个字节的数据 
+  30          {
+  31   1              char i; 
+  32   1              for(i=0;i<8;i++)          //循环8次把编码传给锁存器     
+  33   1              {
+  34   2                      dat=dat>>1;       //右移一位，取出该字节的最低位 
+  35   2                      DS=CY;            //将该字节的最低位传给R
+  36   2                      SHCP=0;          //将数据移入595，上升沿 
+  37   2                      SHCP=1;                    
+  38   2              }     
+  39   1      }
+  40          void display(unsigned char *p)
+  41          {
+  42   1        int x,num,i;
+  43   1        for(i=0;i<=25;i++)
+  44   1         for(num=0;num<16;num++)
+  45   1         { 
+  46   2           P0=num;          //选择对应的行
+  47   2           if((2*turn+2*num+1)<128)
+  48   2           {
+  49   3              WriteByte(*(p+2*turn+2*num+1)); 
+  50   3                  WriteByte(*(p+2*turn+2*num)); 
+  51   3           }
+  52   2           else
+  53   2           {  
+  54   3              WriteByte(0); 
+  55   3                  WriteByte(0); 
+C51 COMPILER V9.00   MAIN                                                                  01/13/2016 15:20:30 PAGE 2   
+
+  56   3              
+  57   3           }                  
+  58   2           STCP=1;                                            
+  59   2                                                              
+  60   2               STCP=0; 
+  61   2               for(x=0;x<40;x++);
+  62   2         }
+  63   1      
+  64   1      }
+  65          
+  66          int main(void)
+  67          {       
+  68   1              while(1)
+  69   1              {       
+  70   2                
+  71   2                  display(table0);
+  72   2              turn++;
+  73   2              if(turn==64) turn=0;
+  74   2              
+  75   2              
+  76   2              }           
+  77   1      }
+  78          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    246    ----
+   CONSTANT SIZE    =    128    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

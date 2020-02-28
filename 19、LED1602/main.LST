@@ -1,0 +1,46 @@
+C51 COMPILER V9.01   MAIN                                                                  09/22/2018 21:45:54 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\软件\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /**************************************************
+   2          功能：在液晶屏的第一行显示"www.ccit.js.cn"
+   3                第二行显示"2012-4-16"
+   4          *****************************************************/
+   5          #include"stc15fxxxx.h"
+   6          extern void init_lcd(void);
+   7          extern lcd_cmd(u8 cmd);
+   8          extern lcd_dat(u8 dat);
+   9          void main(void)
+  10          {
+  11   1          u8 *P;
+  12   1          u8 str1[]="www.jsnm.edu.cn";
+  13   1          u8 str2[]="2018-9-22";
+  14   1              init_lcd();
+  15   1          P=str1;
+  16   1          while(*P)                           //判断字符串是否结束
+  17   1                      lcd_dat(*P++);          //显示"www.jsnm.edu.cn"
+  18   1              lcd_cmd(0xc0);                  //显示在第二行
+  19   1          P=str2;
+  20   1              while(*P)
+  21   1              lcd_dat(*P++);
+  22   1              while(1);
+  23   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    126    ----
+   CONSTANT SIZE    =     26    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      29
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

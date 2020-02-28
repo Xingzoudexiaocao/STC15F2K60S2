@@ -1,0 +1,114 @@
+C51 COMPILER V9.00   EX6                                                                   06/05/2019 14:49:19 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE EX6
+OBJECT MODULE PLACED IN ex6.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE ex6.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1           # include"stc15f2k60s2.h"
+   2          #include"intrins.h"
+   3          #define A0 P03
+   4          #define A1 P04
+   5          #define A2 P05
+   6          #define A3 P06
+   7          #define SHCP P07
+   8          #define STCP P15
+   9          #define DS   P16
+  10          //--  宋体12;  此字体下对应的点阵为：宽x高=16x16   -- 
+  11          unsigned char code  table0[] = {0x00,0x04,0x02,0x04,0x42,0x04,0x22,0x3F,0x14,0x04,0x14,0x04,0x08,0x7F,0x08
+             -,0x04,
+  12          0x14,0x14,0x14,0x14,0x22,0x17,0x42,0x14,0x00,0x14,0x00,0x2C,0xFE,0x27,0x00,0x40};
+  13          unsigned char code  table1[] = {0x00,0x00,0x7E,0x00,0x42,0x3E,0x42,0x22,0x42,0x22,0x7E,0x22,0x42,0x3E,0x42
+             -,0x22,
+  14          0x42,0x22,0x7E,0x22,0x42,0x3E,0x42,0x22,0x82,0x00,0x82,0x00,0x0A,0x01,0x04,0x02};
+  15          
+  16          
+  17          
+  18          
+  19          void WriteByte(char dat)          //写一个字节的数据 
+  20          {
+  21   1              char i; 
+  22   1              for(i=0;i<8;i++)          //循环8次把编码传给锁存器     
+  23   1              {
+  24   2                      dat=dat>>1;       //右移一位，取出该字节的最低位 
+  25   2                      DS=CY;            //将该字节的最低位传给R
+  26   2                      SHCP=0;          //将数据移入595，上升沿 
+  27   2                      SHCP=1;                    
+  28   2              } 
+  29   1                  
+  30   1      }
+  31          void display(unsigned char *p)
+  32          {
+  33   1              int x,num;
+  34   1              for(num=0;num<16;num++)
+  35   1              { 
+  36   2                      WriteByte(0); 
+  37   2                      WriteByte(0);                   
+  38   2                      STCP=1;                                                                                                         
+  39   2                      STCP=0; 
+  40   2                      //选择对应的行
+  41   2                      switch(num)
+  42   2                      {
+  43   3                              case 0 : A0 = 0; A1 = 0; A2 = 0; A3 = 0; break;
+  44   3                              case 1 : A0 = 1; A1 = 0; A2 = 0; A3 = 0; break;
+  45   3                              case 2 : A0 = 0; A1 = 1; A2 = 0; A3 = 0; break;
+  46   3                              case 3 : A0 = 1; A1 = 1; A2 = 0; A3 = 0; break;
+  47   3                              case 4 : A0 = 0; A1 = 0; A2 = 1; A3 = 0; break;
+  48   3                              case 5 : A0 = 1; A1 = 0; A2 = 1; A3 = 0; break;
+  49   3                              case 6 : A0 = 0; A1 = 1; A2 = 1; A3 = 0; break;
+  50   3                              case 7 : A0 = 1; A1 = 1; A2 = 1; A3 = 0; break;
+  51   3                              case 8 : A0 = 0; A1 = 0; A2 = 0; A3 = 1; break;
+  52   3                              case 9 : A0 = 1; A1 = 0; A2 = 0; A3 = 1; break;
+  53   3                              case 10 : A0 = 0; A1 = 1; A2 = 0; A3 = 1; break;
+C51 COMPILER V9.00   EX6                                                                   06/05/2019 14:49:19 PAGE 2   
+
+  54   3                              case 11 : A0 = 1; A1 = 1; A2 = 0; A3 = 1; break;
+  55   3                              case 12 : A0 = 0; A1 = 0; A2 = 1; A3 = 1; break;
+  56   3                              case 13 : A0 = 1; A1 = 0; A2 = 1; A3 = 1; break;
+  57   3                              case 14 : A0 = 0; A1 = 1; A2 = 1; A3 = 1; break;
+  58   3                              case 15 : A0 = 1; A1 = 1; A2 = 1; A3 = 1; break;
+  59   3                      }
+  60   2                      
+  61   2                      WriteByte(*(p+2*num)); 
+  62   2                      WriteByte(*(p+2*num+1));                
+  63   2                      STCP=1;                                                                                                         
+  64   2                      STCP=0; 
+  65   2                      for(x=0;x<100;x++);
+  66   2              }
+  67   1      
+  68   1      }
+  69          
+  70          int main(void)
+  71          {       
+  72   1          unsigned int j;
+  73   1      
+  74   1              while(1)
+  75   1              {       
+  76   2                      for(j=0;j<500;j++)
+  77   2                      display(table0);
+  78   2      
+  79   2                      for(j=0;j<500;j++)
+  80   2                      display(table1); 
+  81   2      
+  82   2                      for(j=0;j<500;j++)
+  83   2                      display(table1); 
+  84   2      
+  85   2              }           
+  86   1      }
+  87          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    380    ----
+   CONSTANT SIZE    =     64    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

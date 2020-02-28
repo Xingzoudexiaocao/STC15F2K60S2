@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"caiji.obj" 
+TO "caiji" 
+RAMSIZE(256) 

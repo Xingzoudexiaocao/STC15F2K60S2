@@ -1,0 +1,4 @@
+"LCD_ZK.obj",
+"IIC.obj" 
+TO "LCD_ZK" 
+RAMSIZE(256) 

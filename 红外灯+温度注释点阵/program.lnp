@@ -1,0 +1,6 @@
+"STARTUP.obj",
+"16_16.obj",
+"ds18b20.obj",
+"main.obj" 
+TO "program" 
+RAMSIZE(256) 

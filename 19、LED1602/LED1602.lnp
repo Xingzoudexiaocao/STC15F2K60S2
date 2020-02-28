@@ -1,0 +1,4 @@
+"LED1602.obj",
+"main.obj" 
+TO "LED1602" 
+RAMSIZE(256) 

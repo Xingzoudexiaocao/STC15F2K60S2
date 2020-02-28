@@ -1,0 +1,88 @@
+C51 COMPILER V9.01   DISPLAY                                                               06/08/2018 15:56:40 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DISPLAY
+OBJECT MODULE PLACED IN display.OBJ
+COMPILER INVOKED BY: D:\软件\keil\C51\BIN\C51.EXE display.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include"stc15f2k60s2.h"
+   2          extern unsigned int num;
+   3          extern unsigned char display_num[];
+   4          code unsigned char shuzi[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   5          void display_1(unsigned char num,unsigned char x)//数码管显示函数
+   6          {
+   7   1                              P2=((P2&0x1f)|0xc0);
+   8   1                                  P0=0x80>>num;//数码管位选
+   9   1                              P2&=0x1f;
+  10   1                              P2=((P2&0x1f)|0xe0);
+  11   1                                  P0=shuzi[x];
+  12   1                                  P2&=0x1f; 
+  13   1              
+  14   1      }
+  15           void num_BUFF8(void)//数码管解析
+  16          {        unsigned char ge,shi,bai,qian;
+  17   1              if(num<10)//各位
+  18   1              {  ge=num;
+  19   2                display_num[0]=ge;
+  20   2              }
+  21   1         if(num>=10&&num<100)//十位
+  22   1              {       ge=num%10;
+  23   2                  display_num[0]=ge;
+  24   2                  shi=num/10;
+  25   2                      display_num[1]=shi;             
+  26   2              }
+  27   1         if(num>=100&&num<1000)//百位
+  28   1              {       ge=num%10;
+  29   2                  display_num[0]=ge;
+  30   2                  shi=(num/10)%10;
+  31   2                      display_num[1]=shi;
+  32   2                      bai=num/100;
+  33   2                      display_num[2]=bai;             
+  34   2              }
+  35   1         if(num>=1000&&num<10000)//千位
+  36   1              {       ge=num%10;
+  37   2                  display_num[0]=ge;
+  38   2                  shi=(num%100)/10;
+  39   2                      display_num[1]=shi;
+  40   2                      bai=(num/100)%10;
+  41   2                      display_num[2]=bai;
+  42   2                      qian=num/1000;
+  43   2                      display_num[3]=qian;            
+  44   2              }
+  45   1      }
+  46          void   display_all(unsigned char *p)
+  47          {
+  48   1              int i;
+  49   1               for(i=0;i<8;i++)
+  50   1              {       
+  51   2                      display_1(i,p[i]);
+  52   2                      delay();
+*** WARNING C206 IN LINE 52 OF DISPLAY.C: 'delay': missing function-prototype
+  53   2              }
+  54   1      }
+C51 COMPILER V9.01   DISPLAY                                                               06/08/2018 15:56:40 PAGE 2   
+
+  55          void flush()//清除缓冲区
+  56          {
+  57   1              unsigned char i;
+  58   1              for(i=0;i<8;i++)
+  59   1              {
+  60   2                      display_num[i]=0;
+  61   2              }
+  62   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    349    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

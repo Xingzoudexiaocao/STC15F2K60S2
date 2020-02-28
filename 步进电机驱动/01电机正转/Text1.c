@@ -1,0 +1,58 @@
+#include <reg51.h>
+ //#include<AT89X52.h>
+ #include<intrins.h>
+ #define uchar unsigned char
+ #define uint unsigned int
+ 
+ uchar code CCW[8]={0x08,0x0c,0x04,0x06,0x02,0x03,0x01,0x09};   //????????
+ 
+void delaynms(uint aa)
+{
+  uchar bb;
+  while(aa--)
+  {
+   for(bb=0;bb<115;bb++)     //1ms??????
+   {
+    ;
+   }
+  }
+ 
+}
+void delay500us(void)
+{
+  int j;
+  for(j=0;j<57;j++)
+  {
+   ;
+  }
+}
+
+
+void motor_ccw(void)
+{
+  uchar i,j;
+  for(j=0;j<8;j++)                 //??????,??????????,???????????
+  {
+    for(i=0;i<8;i++)  //??45?
+   {
+      P1=CCW[i];
+      delaynms(10);   //????
+    }
+  }
+}
+
+
+void main(void)
+{
+ uchar r;
+ uchar N=64;          //?????????????,????1/64 ,
+       //??N=64?,?????????
+ while(1)
+ {
+  
+    for(r=0;r<N;r++)
+       motor_ccw();  //????
+ }
+  
+}      
+ 

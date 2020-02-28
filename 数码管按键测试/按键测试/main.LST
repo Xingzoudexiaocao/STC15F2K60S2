@@ -1,0 +1,65 @@
+C51 COMPILER V9.01   MAIN                                                                  09/26/2018 17:22:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\软件\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include"stc15f2k60s2.h"
+   2          #include "display.h"
+   3          #include "delay.h"                         //引用相关头文件
+   4          #define key1  P30
+   5          #define key2  P31
+   6          #define key3  P32
+   7          #define key4  P33 
+   8          unsigned char dis_num[];
+   9          unsigned char key_scan();
+  10          bit e=0;
+  11          void main()
+  12          {  dis_num[0]=0;
+  13   1        while(1)
+  14   1        {
+  15   2            if(key_value==0x7e)
+*** ERROR C202 IN LINE 15 OF MAIN.C: 'key_value': undefined identifier
+  16   2                {
+  17   3                  P10=0;
+  18   3                }
+  19   2        }
+  20   1      }
+  21          unsigned char key_scan() //按键扫描函数
+  22          {
+  23   1         unsigned char key_value=0xff,n,i;
+  24   1         n=0xfe;
+  25   1         for(i=1;i<=4;i++)
+  26   1              {
+  27   2                  P3=n;     //赋值当前扫描行的扫描值1
+  28   2                       if(P3!=n||P44==0||P42==0)//判断当前行是否有按键按下2
+  29   2                       {
+  30   3                key_value=((P3&0x3f)|((P4&0x10)<<3)|(P4&0x04)<<4);//获取到键值3
+  31   3                                        break;        
+  32   3                       }
+  33   2                       n=(n<<1)|(n>>7);//若当前行没有按键，循环左移得到下一行的扫描值
+  34   2              }
+  35   1              return key_value; //返回键值
+  36   1      }
+  37          
+  38                  //                              0x7e,1, //4*4矩阵式键盘第一行第一个按键的键值和定义的数据的显示码         
+  39                  //                                  0xbe,2, //4*4矩阵式键盘第一行第二个按键的键值和定义的数据的显示码     
+  40                  //                                  0xde,3, //4*4矩阵式键盘第一行第三个按键的键值和定义的数据的显示码     
+  41                  //                                  0xee,10,//4*4矩阵式键盘第一行第四个按键的键值和定义的数据的显示码     
+  42                  //                                  0x7d,4, //4*4矩阵式键盘第二行第一个按键的键值和定义的数据的显示码     
+  43            //                                0xbd,5, //4*4矩阵式键盘第二行第二个按键的键值和定义的数据的显示码     
+  44                  //                              0xdd,6, //4*4矩阵式键盘第二行第三个按键的键值和定义的数据的显示码         
+  45                  //                              0xed,11,//4*4矩阵式键盘第二行第四个按键的键值和定义的数据的显示码         
+  46                  //                              0x7b,7, //4*4矩阵式键盘第三行第一个按键的键值和定义的数据的显示码         
+  47                  //                              0xbb,8, //4*4矩阵式键盘第三行第二个按键的键值和定义的数据的显示码         
+  48                  //                              0xdb,9, //4*4矩阵式键盘第三行第三个按键的键值和定义的数据的显示码         
+  49                  //                              0xeb,12,//4*4矩阵式键盘第三行第四个按键的键值和定义的数据的显示码         
+  50                  //                              0x77,0 ,//4*4矩阵式键盘第四行第一个按键的键值和定义的数据的显示码  
+  51                  //                              0xb7,15,//4*4矩阵式键盘第四行第二个按键的键值和定义的数据的显示码         
+  52                  //                              0xd7,14,//4*4矩阵式键盘第四行第三个按键的键值和定义的数据的显示码         
+  53                  //                              0xe7,13 //4*4矩阵式键盘第四行第四个按键的键值和定义的数据的显示码
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

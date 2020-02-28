@@ -1,0 +1,4 @@
+"LCD12864.obj",
+"main.obj" 
+TO "LCD12864" 
+RAMSIZE(256) 

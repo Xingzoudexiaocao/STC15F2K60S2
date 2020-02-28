@@ -1,0 +1,177 @@
+C51 COMPILER V9.00   MAIN                                                                  06/10/2019 20:55:00 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "main.h"
+   2          
+   3          //--  宋体12;  此字体下对应的点阵为：宽x高=16x16   -- 
+   4          unsigned char code  table0[] = {0x00,0x04,0x02,0x04,0x42,0x04,0x22,0x3F,0x14,0x04,0x14,0x04,0x08,0x7F,0x08
+             -,0x04,
+   5          0x14,0x14,0x14,0x14,0x22,0x17,0x42,0x14,0x00,0x14,0x00,0x2C,0xFE,0x27,0x00,0x40};
+   6          
+   7          unsigned char code  table1[] = {0x00,0x00,0x7E,0x00,0x42,0x3E,0x42,0x22,0x42,0x22,0x7E,0x22,0x42,0x3E,0x42
+             -,0x22,
+   8          0x42,0x22,0x7E,0x22,0x42,0x3E,0x42,0x22,0x82,0x00,0x82,0x00,0x0A,0x01,0x04,0x02};
+   9          
+  10          unsigned char code dis[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,
+  11                                                            0xbf,0x86,0xdb,0xcf,0xe6,0xed,0xfd,0x87,0xff,0xef,0x39};
+  12          unsigned char  display_num[]={0xff,0xff,0xff,0xff};
+  13          
+  14          unsigned int temperature = 0;
+  15          unsigned int _16_16_cache = 0;
+  16          unsigned char _16_16_flag = 0;
+  17          unsigned char display_switch = 0;
+  18          unsigned int time0_num=0;
+  19          bit time_bit = 0;
+  20          void Delay10ms();
+  21          void main(void)
+  22          {
+  23   1              Timer0Init();
+  24   1              EA = 1;
+  25   1              while(1)
+  26   1              {
+  27   2                      temperature = rd_temperature();  //读温度      
+  28   2                      temperature = temperature *6.25;
+  29   2      
+  30   2                      display_num[0]=temperature/1000;        
+  31   2                      display_num[1]=temperature/100%10;
+  32   2                      display_num[2]=temperature/10%10;
+  33   2                      display_num[3]=temperature%10;
+  34   2      
+  35   2                      if(P10==1)
+  36   2                      {
+  37   3                              Delay10ms();
+  38   3                              if(P10==1)
+  39   3                              {
+  40   4                                      time0_num = 0;
+  41   4                                      time_bit = 0;
+  42   4                                      P11 = 0;
+  43   4                              }
+  44   3                      }
+  45   2                      else
+  46   2                      {       
+  47   3                              time_bit = 1;
+  48   3                              if((time0_num>=10000)&&(P10==0))
+  49   3                              {
+  50   4                                      time_bit = 0;
+  51   4                                      P11=1;  
+  52   4                              }
+  53   3                      }
+C51 COMPILER V9.00   MAIN                                                                  06/10/2019 20:55:00 PAGE 2   
+
+  54   2      
+  55   2              }
+  56   1      }
+  57          
+  58          void Timer0Init(void)           //1毫秒@11.0592MHz
+  59          {
+  60   1              AUXR |= 0x80;           //定时器时钟1T模式
+  61   1              TMOD &= 0xF0;           //设置定时器模式
+  62   1              TL0 = 0xCD;             //设置定时初值
+  63   1              TH0 = 0xD4;             //设置定时初值
+  64   1              TF0 = 0;                //清除TF0标志
+  65   1              TR0 = 1;                //定时器0开始计时
+  66   1              ET0 = 1;
+  67   1      }
+  68          
+  69          
+  70          void time0_int(void) interrupt 1
+  71          {
+  72   1      //      if(_16_16_cache ==500)
+  73   1      //      {
+  74   1      //              _16_16_cache = 0;
+  75   1      //
+  76   1      //              _16_16_flag ++;
+  77   1      //
+  78   1      //              if(_16_16_flag ==3)
+  79   1      //                      _16_16_flag = 0;
+  80   1      //      }
+  81   1      //      else
+  82   1      //              _16_16_cache++;
+  83   1      //      switch(_16_16_flag)
+  84   1      //      {
+  85   1      //              case 0 : display(table0); break;
+  86   1      //              case 1 : display(table1); break;
+  87   1      //              case 2 : display(table1); break;
+  88   1      //      }
+  89   1      
+  90   1              if(time0_num>=12000)
+  91   1                      time0_num=0;
+  92   1              else
+  93   1      //              if(time_bit == 1)
+  94   1                              time0_num++;
+  95   1      //              else 
+  96   1      //                      time0_num = 0;
+  97   1      
+  98   1      
+  99   1              switch(display_switch)
+ 100   1              {
+ 101   2                      case 0 :        P00=0;
+ 102   2                                              P01=0;
+ 103   2                                              P02=0;
+ 104   2                                              P2=dis[20];
+ 105   2                                              break;
+ 106   2                      case 1 : 
+ 107   2                                              P00=0;
+ 108   2                                              P01=0;
+ 109   2                                              P02=1;
+ 110   2                                              P2=dis[display_num[0]];
+ 111   2                                              break;
+ 112   2                      case 2 : 
+ 113   2                                              P00=1;
+ 114   2                                              P01=0;
+ 115   2                                              P02=1;
+C51 COMPILER V9.00   MAIN                                                                  06/10/2019 20:55:00 PAGE 3   
+
+ 116   2                                              P2=dis[display_num[1]+ 9];
+ 117   2                                              break;
+ 118   2                      case 3 : 
+ 119   2                                              P00=0;
+ 120   2                                              P01=1;
+ 121   2                                              P02=1;
+ 122   2                                              P2=dis[display_num[2]];
+ 123   2                                              break;
+ 124   2                      case 4 :        P00=1;
+ 125   2                                              P01=1;
+ 126   2                                              P02=1;
+ 127   2                                              P2=dis[display_num[3]];
+ 128   2                                              break;
+ 129   2              }
+ 130   1              if(display_switch > 4)
+ 131   1                      display_switch = 0;
+ 132   1              else
+ 133   1                      display_switch++;               
+ 134   1      }
+ 135          void Delay10ms()                //@11.0592MHz
+ 136          {
+ 137   1              unsigned char i, j;
+ 138   1      
+ 139   1              _nop_();
+ 140   1              _nop_();
+ 141   1              _nop_();
+ 142   1              i = 11;
+ 143   1              j = 190;
+ 144   1              do
+ 145   1              {
+ 146   2                      while (--j);
+ 147   2              } while (--i);
+ 148   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    317    ----
+   CONSTANT SIZE    =     85    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

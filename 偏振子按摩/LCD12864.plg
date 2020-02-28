@@ -1,0 +1,33 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\hhhho\Desktop\Æ«Õñ×Ó°´Ä¦\LCD12864.uvproj
+Project File Date:  04/23/2019
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling main.c...
+MAIN.C(65): error C202: 'Shot_Dat': undefined identifier
+MAIN.C(75): error C202: 'Long_Dat': undefined identifier
+MAIN.C(81): error C202: 'Shot_Dat': undefined identifier
+Target not created
+Build target 'Target 1'
+compiling main.c...
+linking...
+BL51 BANKED LINKER/LOCATER V6.22 - SN: K1LMC-298RAC
+COPYRIGHT KEIL ELEKTRONIK GmbH 1987 - 2009
+"main.obj" 
+TO "LCD12864" 
+RAMSIZE(256) 
+*** FATAL ERROR L256: MODULE CONTAINS DUPLICATE SEGMENT NAMES
+    SEGMENT: ?PR?KEY_SCAN?MAIN
+    MODULE:  main.obj (MAIN)
+Target not created
+Build target 'Target 1'
+compiling main.c...
+linking...
+Program Size: data=15.2 xdata=0 code=430
+creating hex file from "LCD12864"...
+"LCD12864" - 0 Error(s), 0 Warning(s).

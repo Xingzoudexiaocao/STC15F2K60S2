@@ -1,0 +1,156 @@
+BL51 BANKED LINKER/LOCATER V6.22                                                        01/13/2016  15:20:30  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
+C:\KEIL\C51\BIN\BL51.EXE main.obj TO LED
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  main.obj (MAIN)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?CLDOPTR)
+  C:\KEIL\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  LED (MAIN)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0007H     UNIT         _DATA_GROUP_
+            DATA    000FH     0001H     UNIT         ?DT?MAIN
+            IDATA   0010H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     07FDH                  *** GAP ***
+            CODE    0800H     00CFH     UNIT         ?PR?_DISPLAY?MAIN
+            CODE    08CFH     008CH     UNIT         ?C_C51STARTUP
+            CODE    095BH     0080H     UNIT         ?CO?MAIN
+            CODE    09DBH     0046H     UNIT         ?C?LIB_CODE
+            CODE    0A21H     0015H     UNIT         ?PR?MAIN?MAIN
+            CODE    0A36H     0012H     UNIT         ?PR?_WRITEBYTE?MAIN
+            CODE    0A48H     0004H     UNIT         ?C_INITSEG
+
+
+
+OVERLAY MAP OF MODULE:   LED (MAIN)
+
+
+SEGMENT                          DATA_GROUP 
+  +--> CALLED SEGMENT          START    LENGTH
+----------------------------------------------
+?C_C51STARTUP                  -----    -----
+  +--> ?PR?MAIN?MAIN
+  +--> ?C_INITSEG
+
+?PR?MAIN?MAIN                  -----    -----
+  +--> ?CO?MAIN
+  +--> ?PR?_DISPLAY?MAIN
+
+?PR?_DISPLAY?MAIN              0008H    0007H
+  +--> ?PR?_WRITEBYTE?MAIN
+
+
+BL51 BANKED LINKER/LOCATER V6.22                                                      01/13/2016  15:20:30  PAGE 2
+
+
+
+SYMBOL TABLE OF MODULE:  LED (MAIN)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        MAIN
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  B:0090H.3       PUBLIC        DS
+  B:00D0H.7       PUBLIC        CY
+  C:0A36H         PUBLIC        _WriteByte
+  C:0A21H         PUBLIC        main
+  B:0090H.1       PUBLIC        SHCP
+  B:0090H.2       PUBLIC        STCP
+  C:095BH         PUBLIC        table0
+  D:000FH         PUBLIC        turn
+  C:0800H         PUBLIC        _display
+  -------         PROC          _WRITEBYTE
+  D:0007H         SYMBOL        dat
+  -------         DO            
+  D:0006H         SYMBOL        i
+  -------         ENDDO         
+  C:0A36H         LINE#         29
+  C:0A36H         LINE#         30
+  C:0A36H         LINE#         32
+  C:0A38H         LINE#         33
+  C:0A38H         LINE#         34
+  C:0A3DH         LINE#         35
+  C:0A3FH         LINE#         36
+  C:0A41H         LINE#         37
+  C:0A43H         LINE#         38
+  C:0A47H         LINE#         39
+  -------         ENDPROC       _WRITEBYTE
+  -------         PROC          _DISPLAY
+  D:0008H         SYMBOL        p
+  -------         DO            
+  D:0006H         SYMBOL        x
+  D:000BH         SYMBOL        num
+  D:000DH         SYMBOL        i
+  -------         ENDDO         
+  C:0800H         LINE#         40
+  C:0806H         LINE#         41
+  C:0806H         LINE#         43
+  C:080BH         LINE#         44
+  C:0810H         LINE#         45
+  C:0810H         LINE#         46
+  C:0813H         LINE#         47
+  C:0839H         LINE#         48
+  C:0839H         LINE#         49
+  C:0862H         LINE#         50
+  C:0884H         LINE#         51
+  C:0886H         LINE#         53
+  C:0886H         LINE#         54
+  C:088BH         LINE#         55
+  C:0890H         LINE#         57
+BL51 BANKED LINKER/LOCATER V6.22                                                      01/13/2016  15:20:30  PAGE 3
+
+
+  C:0890H         LINE#         58
+  C:0892H         LINE#         60
+  C:0894H         LINE#         61
+  C:08A2H         LINE#         62
+  C:08CEH         LINE#         64
+  -------         ENDPROC       _DISPLAY
+  -------         PROC          MAIN
+  C:0A21H         LINE#         66
+  C:0A21H         LINE#         67
+  C:0A21H         LINE#         68
+  C:0A21H         LINE#         69
+  C:0A21H         LINE#         71
+  C:0A2AH         LINE#         72
+  C:0A2CH         LINE#         73
+  C:0A34H         LINE#         76
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        MAIN
+
+  -------         MODULE        ?C?CLDPTR
+  C:09DBH         PUBLIC        ?C?CLDPTR
+  -------         ENDMOD        ?C?CLDPTR
+
+  -------         MODULE        ?C?CLDOPTR
+  C:09F4H         PUBLIC        ?C?CLDOPTR
+  -------         ENDMOD        ?C?CLDOPTR
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 0179H BYTE (18%) *
+******************************************************************************
+
+Program Size: data=17.0 xdata=0 code=591
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

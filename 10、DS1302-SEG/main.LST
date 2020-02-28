@@ -1,0 +1,129 @@
+C51 COMPILER V9.01   MAIN                                                                  10/29/2018 21:27:04 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\软件\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include"stc15fxxxx.h"
+   2          #include "ds1302.h"
+   3          unsigned char code dis[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x40};
+   4          u8 code segtab[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0x88,0x83,0xc6,0xa1,0x86,0x8e,0x89,0x8
+             -c,0xff,0xbf};
+   5                                                  //0             1        2        3        4    5        6        7        8    9        A       B        C             D        E       F         H   P        灭       -
+   6                                                  //0             1        2        3        4    5        6        7        8    9        10      11       12   13       14      15        16  17        18       19
+   7                                                  //共阳极数码管字段码
+   8          u8 dbuf[8]={0,0,19,0,0,19,0,0};
+   9          /************延时函数***************/
+  10          void delay1(void)//延时函数
+  11          {
+  12   1          unsigned char i,j,k;
+  13   1          for(i=0; i<200; i++)
+  14   1          {
+  15   2              for(j=0; j<1; j++)
+  16   2              {                                               
+  17   3                  for(k=0; k<2; k++);
+  18   3              }
+  19   2          } 
+  20   1      }
+  21          /*******数码管显示函数***************/
+  22          //      void  disp(void)
+  23          //{
+  24          //      u8 i;
+  25          //      u8 bsel=0x01;
+  26          //      
+  27          //      for(i=0;i<8;i++)
+  28          //      {
+  29          //              P0=bsel;//数据准备：位选数据
+  30          //              P2=P2&0x1f|0xc0;//送入数据
+  31          //              P2&=0x1f;//再次释放片选
+  32          //              P0=segtab[dbuf[i]];//数据准备：显示数据
+  33          //              P2=P2&0x1f|0xe0;//送入数据
+  34          //              delay(1);//延时，形成视觉暂留
+  35          //              bsel=_crol_(bsel,1);    
+  36          //              P0|=0xff;//将P0口初始化为：1111 1111  熄灭所有数码管
+  37          //              P2&=0x1f;//再次释放片选 
+  38          //      }
+  39          //      
+  40          //}
+  41          int main()
+  42          {
+  43   1      //      P0&=0xaf;
+  44   1      //      P2=P2&0x1f|0xa0;
+  45   1              DS1302_init();//初始化DS1302
+  46   1              Wrds1302_init();
+  47   1              while(1)
+  48   1              {
+  49   2                      Rdds1302_init();
+  50   2                      dbuf[6]=second/10;
+  51   2                      dbuf[7]=second%10;
+  52   2                      dbuf[3]=minute/10;
+  53   2                      dbuf[4]=minute%10;
+  54   2                      dbuf[0]=hour/10;
+C51 COMPILER V9.01   MAIN                                                                  10/29/2018 21:27:04 PAGE 2   
+
+  55   2                      dbuf[1]=hour%10;
+  56   2                      dbuf[2]=mouth%10;
+  57   2      
+  58   2                       P00=1;
+  59   2                       P01=1;
+  60   2                       P02=1;
+  61   2                       P2=dis[dbuf[7]];
+  62   2                       delay1();
+  63   2      //               P10=1;
+  64   2      //               P11=0;
+  65   2      //               P12=0;
+  66   2      //               P0=dis[dbuf[0]];
+  67   2                       delay1();
+  68   2      //               P10=0;
+  69   2      //               P11=1;
+  70   2      //               P12=0;
+  71   2      //               P0=dis[dbuf[1]];
+  72   2                       delay1();
+  73   2      //               P10=1;
+  74   2      //               P11=1;
+  75   2      //               P12=0;
+  76   2      //               P0=dis[dbuf[3]];
+  77   2                       delay1();
+  78   2      //               P10=0;
+  79   2      //               P11=0;
+  80   2      //               P12=1;
+  81   2      //               P0=dis[dbuf[4]];
+  82   2                       delay1();
+  83   2      //               P10=1;
+  84   2      //               P11=0;
+  85   2      //               P12=1;
+  86   2      //               P0=dis[dbuf[6]];
+  87   2      //               delay1();
+  88   2      //               P10=0;
+  89   2      //               P11=1;
+  90   2      //               P12=1;
+  91   2      //               P0=dis[dbuf[7]];
+  92   2      //               delay1();
+  93   2      //               P10=1;
+  94   2      //               P11=1;
+  95   2      //               P12=1;
+  96   2      //               P0=dis[11];
+  97   2      //               delay1();
+  98   2      
+  99   2      
+ 100   2      //              disp(); 
+ 101   2              }                
+ 102   1              return 0;
+ 103   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    116    ----
+   CONSTANT SIZE    =     31    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

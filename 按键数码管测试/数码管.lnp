@@ -1,0 +1,6 @@
+"STARTUP.obj",
+"main.obj",
+"delay.obj",
+"display.obj" 
+TO "ÊýÂë¹Ü" 
+RAMSIZE(256) 

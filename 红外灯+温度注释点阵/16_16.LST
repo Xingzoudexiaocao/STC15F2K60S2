@@ -1,0 +1,81 @@
+C51 COMPILER V9.00   16_16                                                                 06/10/2019 20:55:00 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE 16_16
+OBJECT MODULE PLACED IN 16_16.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE 16_16.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "16_16.h"
+   2          
+   3          void WriteByte(char dat)          //写一个字节的数据 
+   4          {
+   5   1              char i; 
+   6   1              for(i=0;i<8;i++)          //循环8次把编码传给锁存器     
+   7   1              {
+   8   2                      dat=dat>>1;       //右移一位，取出该字节的最低位 
+   9   2                      DS=CY;            //将该字节的最低位传给R
+  10   2                      SHCP=0;          //将数据移入595，上升沿 
+  11   2                      SHCP=1;                    
+  12   2              } 
+  13   1                  
+  14   1      }
+  15          void display(unsigned char *p)
+  16          {
+  17   1              int x,num;
+  18   1              for(num=0;num<16;num++)
+  19   1              { 
+  20   2                      WriteByte(0); 
+  21   2                      WriteByte(0);                   
+  22   2                      STCP=1;                                                                                                         
+  23   2                      STCP=0; 
+  24   2                      //选择对应的行
+  25   2                      switch(num)
+  26   2                      {
+  27   3                              case 0 : A0 = 0; A1 = 0; A2 = 0; A3 = 0; break;
+  28   3                              case 1 : A0 = 1; A1 = 0; A2 = 0; A3 = 0; break;
+  29   3                              case 2 : A0 = 0; A1 = 1; A2 = 0; A3 = 0; break;
+  30   3                              case 3 : A0 = 1; A1 = 1; A2 = 0; A3 = 0; break;
+  31   3                              case 4 : A0 = 0; A1 = 0; A2 = 1; A3 = 0; break;
+  32   3                              case 5 : A0 = 1; A1 = 0; A2 = 1; A3 = 0; break;
+  33   3                              case 6 : A0 = 0; A1 = 1; A2 = 1; A3 = 0; break;
+  34   3                              case 7 : A0 = 1; A1 = 1; A2 = 1; A3 = 0; break;
+  35   3                              case 8 : A0 = 0; A1 = 0; A2 = 0; A3 = 1; break;
+  36   3                              case 9 : A0 = 1; A1 = 0; A2 = 0; A3 = 1; break;
+  37   3                              case 10 : A0 = 0; A1 = 1; A2 = 0; A3 = 1; break;
+  38   3                              case 11 : A0 = 1; A1 = 1; A2 = 0; A3 = 1; break;
+  39   3                              case 12 : A0 = 0; A1 = 0; A2 = 1; A3 = 1; break;
+  40   3                              case 13 : A0 = 1; A1 = 0; A2 = 1; A3 = 1; break;
+  41   3                              case 14 : A0 = 0; A1 = 1; A2 = 1; A3 = 1; break;
+  42   3                              case 15 : A0 = 1; A1 = 1; A2 = 1; A3 = 1; break;
+  43   3                      }
+  44   2                      
+  45   2                      WriteByte(*(p+2*num)); 
+  46   2                      WriteByte(*(p+2*num+1));                
+  47   2                      STCP=1;                                                                                                         
+  48   2                      STCP=0; 
+  49   2                      for(x=0;x<100;x++);
+  50   2              }
+  51   1      }
+  52          
+  53          
+  54          
+  55          
+C51 COMPILER V9.00   16_16                                                                 06/10/2019 20:55:00 PAGE 2   
+
+  56          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    312    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

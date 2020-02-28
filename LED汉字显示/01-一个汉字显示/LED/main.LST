@@ -1,0 +1,78 @@
+C51 COMPILER V9.01   MAIN                                                                  06/20/2018 09:11:59 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\软件\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          //1、用导线将MCU的MCU_IO1---MCU_IO4分别连接到16*16LED的A0、A1、A2、A3。
+   2          //2、用导线将MCU的SDA、SCL、PWM0分别连接到16*16LED的SHCR、STCP、DS。
+   3          #include        <reg51.h>
+   4          unsigned char code  table0[] = {
+   5          //--  文字:  刘  --
+   6          //--  宋体12;  此字体下对应的点阵为：宽x高=16x16   -- 
+   7          0x00,0x00,0x04,0x40,0x08,0x41,0x90,0x49,0xF0,0x48,0x60,0x48,0x50,0x48,0x48,0x48,
+   8          0x84,0x48,0x80,0x48,0xFC,0x48,0x00,0x49,0x20,0x40,0x30,0x40,0x00,0x40,0x00,0x00
+   9          };
+  10          
+  11          sbit    SHCP = P1^1;
+  12          sbit    STCP = P1^2;
+  13          sbit    DS   = P1^3;
+  14          
+  15          
+  16          void WriteByte(char dat)          //写一个字节的数据 
+  17          {
+  18   1              char i; 
+  19   1              for(i=0;i<8;i++)          //循环8次把编码传给锁存器     
+  20   1              {
+  21   2                      dat=dat>>1;       //右移一位，取出该字节的最低位 
+  22   2                      DS=CY;            //将该字节的最低位传给R
+  23   2                      SHCP=0;          //将数据移入595，上升沿 
+  24   2                      SHCP=1;                    
+  25   2              }     
+  26   1      }
+  27          void display(unsigned char *p)
+  28          {
+  29   1        int x,num,i;
+  30   1        for(num=0;num<16;num++)
+  31   1        { 
+  32   2           P0=num;          //选择对应的行
+  33   2           WriteByte(*(p+2*num+1)); 
+  34   2               WriteByte(*(p+2*num));                 
+  35   2           STCP=1;                                            
+  36   2                                                              
+  37   2               STCP=0; 
+  38   2               for(x=0;x<40;x++);
+  39   2        }
+  40   1      
+  41   1      }
+*** WARNING C280 IN LINE 29 OF MAIN.C: 'i': unreferenced local variable
+  42          
+  43          int main(void)
+  44          {       
+  45   1              while(1)
+  46   1              {       
+  47   2                
+  48   2                  display(table0);
+  49   2              
+  50   2              }           
+  51   1      }
+  52          
+
+
+C51 COMPILER V9.01   MAIN                                                                  06/20/2018 09:11:59 PAGE 2   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    120    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
