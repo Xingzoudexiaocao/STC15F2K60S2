@@ -1,0 +1,194 @@
+C51 COMPILER V9.00   EX3                                                                   10/17/2019 11:48:16 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE EX3
+OBJECT MODULE PLACED IN ex3.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE ex3.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          
+   2          #include "stc15f2k60s2.h"
+   3          #include <intrins.h>
+   4          /*************常量定义****************/
+   5          
+   6          #define MAIN_Fosc                   11059200L       //主时钟,晶振频率不同的直接在这里修改频率
+   7          #define serial_one_read_max         4              //定义缓存区的长度
+   8          #define serial_one_baud_rate        9600L           //波特率,只需在这里修改波特率
+   9          #define Timer1_Reload               (65536UL -(MAIN_Fosc / 4 / serial_one_baud_rate))    //用定时器1做波特
+             -率发生器，计算定时器1的重装值    
+  10          #define u8 unsigned char
+  11          
+  12          
+  13          
+  14          /*************变量定义****************/
+  15          u8  serial_one_read_data[serial_one_read_max]={0,0,0,0};  //定义串口接受数据缓存区
+  16          u8  serial_one_read_count=0;                    //接受数据的个数
+  17          
+  18          
+  19          void serial_one_init();
+  20          void serial_one_send_byte(u8 dat);
+  21          void serial_one_send_string(u8 *dat);
+  22          void serial_one_send_length_string(u8 *dat,u8 length);
+  23          
+  24          void Delay100ms();
+  25          void Delay2000ms();
+  26          
+  27          void Delay2000ms()              //@11.0592MHz
+  28          {
+  29   1              unsigned char i, j, k;
+  30   1      
+  31   1              _nop_();
+  32   1              _nop_();
+  33   1              i = 85;
+  34   1              j = 12;
+  35   1              k = 155;
+  36   1              do
+  37   1              {
+  38   2                      do
+  39   2                      {
+  40   3                              while (--k);
+  41   3                      } while (--j);
+  42   2              } while (--i);
+  43   1      }
+  44          
+  45          void Delay100ms()               //@11.0592MHz
+  46          {
+  47   1              unsigned char i, j, k;
+  48   1      
+  49   1              _nop_();
+  50   1              _nop_();
+  51   1              i = 5;
+  52   1              j = 52;
+  53   1              k = 195;
+  54   1              do
+C51 COMPILER V9.00   EX3                                                                   10/17/2019 11:48:16 PAGE 2   
+
+  55   1              {
+  56   2                      do
+  57   2                      {
+  58   3                              while (--k);
+  59   3                      } while (--j);
+  60   2              } while (--i);
+  61   1      }
+  62          
+  63          
+  64          //初始化串口1
+  65          void serial_one_init()
+  66          {
+  67   1          SCON |= 0x40;          //8位数据
+  68   1          P_SW1 &=  ~0xc0;       //UART1 使用P30 P31口  默认
+  69   1          TR1 = 0;               //关闭定时器
+  70   1          AUXR &= ~0x01;      //S1 BRT Use Timer1;
+  71   1          TMOD &= ~(1<<6);    //Timer1 set As Timer
+  72   1          TMOD &= ~0x30;      //Timer1_16bitAutoReload;2
+  73   1          AUXR |=  (1<<6);    //Timer1 set as 1T mode
+  74   1          TH1 = (u8)(Timer1_Reload >> 8);             //定时器高八位赋初值
+  75   1          TL1 = (u8)Timer1_Reload;                    //定时器低八位赋初值
+  76   1          TR1 = 1;    //打开定时器
+  77   1          PS = 1;     //高优先级中断
+  78   1          REN = 1;    //允许接收
+  79   1          ES  = 1;    //允许中断
+  80   1              EA = 1;     //允许全局中断
+  81   1      }
+  82          
+  83          //串口1发送一个字节
+  84          void serial_one_send_byte(u8 dat)
+  85          {
+  86   1          SBUF = dat;   //发送数据
+  87   1          while(!TI);   //等待发送完毕
+  88   1          TI=0;         //清除发送标志
+  89   1      }
+  90          
+  91          //串口1发送字符串
+  92          void serial_one_send_string(u8 *dat)
+  93          {
+  94   1          while(*dat)
+  95   1              serial_one_send_byte(*dat++);
+  96   1      }
+  97          
+  98          //串口1发送指定指定长度数据
+  99          void serial_one_send_length_string(u8 *dat,u8 length)
+ 100          {
+ 101   1          u8 i=0;
+ 102   1          for(;i < length;i++)
+ 103   1              serial_one_send_byte(dat[i]);
+ 104   1      }
+ 105          
+ 106          void Timer0Init(void)           //1毫秒@11.0592MHz
+ 107          {
+ 108   1              AUXR |= 0x80;           //定时器时钟1T模式
+ 109   1              TMOD &= 0xF0;           //设置定时器模式
+ 110   1              TL0 = 0xCD;             //设置定时初值
+ 111   1              TH0 = 0xD4;             //设置定时初值
+ 112   1              TF0 = 0;                //清除TF0标志
+ 113   1              TR0 = 1;                //定时器0开始计时
+ 114   1      }
+ 115          
+ 116          
+C51 COMPILER V9.00   EX3                                                                   10/17/2019 11:48:16 PAGE 3   
+
+ 117          void main()
+ 118          {
+ 119   1              char i=0;
+ 120   1          serial_one_init();//串口初始化
+ 121   1              Timer0Init();
+ 122   1              P10=1;
+ 123   1          while(1)
+ 124   1          {
+ 125   2              //      serial_one_send_string(serial_one_read_data);
+ 126   2            if((serial_one_read_data[0]=='Z'))
+ 127   2                {     
+ 128   3      
+ 129   3                              P10=0;
+ 130   3                              ET0 = 1;
+ 131   3                              Delay100ms();
+ 132   3                              ET0 = 0;
+ 133   3                              Delay2000ms();
+ 134   3      
+ 135   3                              P10=1;
+ 136   3                              ET0 = 1;
+ 137   3                              Delay100ms();
+ 138   3                              ET0 = 0;
+ 139   3      
+ 140   3                              for(i=0;i<10;i++)
+ 141   3                              serial_one_read_data[i]=0;
+ 142   3                }
+ 143   2                if(serial_one_read_data[3]!=0)
+ 144   2                              for(i=0;i<4;i++)
+ 145   2                                              serial_one_read_data[i]=0;
+ 146   2                }
+ 147   1      
+ 148   1      }
+ 149          
+ 150          /********************* 串口1中断函数************************/
+ 151          void UART1_int (void) interrupt 4
+ 152          {
+ 153   1          if(RI)
+ 154   1          {
+ 155   2              RI = 0;//清除接受标志
+ 156   2              serial_one_read_data[serial_one_read_count] = SBUF;//将数据存入数组
+ 157   2      
+ 158   2              if(++serial_one_read_count > serial_one_read_max)    //避免溢出
+ 159   2                  serial_one_read_count = 0;
+ 160   2      
+ 161   2          }
+ 162   1      }
+ 163          void tm0_isr() interrupt 1
+ 164          {
+ 165   1          P11 = ! P11;                    //将测试口取反
+ 166   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    278    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5       6
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

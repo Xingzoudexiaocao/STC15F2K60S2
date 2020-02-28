@@ -1,0 +1,6 @@
+"STARTUP.obj",
+"RC522.obj",
+"MAIN.obj",
+"LCD12864.obj" 
+TO "test" 
+RAMSIZE(256) 

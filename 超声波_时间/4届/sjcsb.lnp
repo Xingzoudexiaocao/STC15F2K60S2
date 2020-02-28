@@ -1,0 +1,8 @@
+"STARTUP.obj",
+"main.obj",
+"key.obj",
+"iic.obj",
+"ds1302.obj",
+"display.obj" 
+TO "sjcsb" 
+RAMSIZE(256) 

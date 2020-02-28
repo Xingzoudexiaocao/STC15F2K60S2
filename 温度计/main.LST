@@ -1,0 +1,425 @@
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include "iic.h"
+   3          #include "display.h"
+   4          #include "key.h"
+   5          #include "ds18b20.h"
+   6          unsigned char display_cache [] = {10,10,10,10,10,10,10,10};
+   7          unsigned char key_value = 0xff;
+   8          unsigned char data_set[2];
+   9          unsigned int temp;
+  10          unsigned int count_save_temp;
+  11          unsigned char save_temp;
+  12          char set_temp[2];
+  13          unsigned char Old_Temp_dat_[10];
+  14          
+  15          unsigned char key_State_flag = 0;
+  16          unsigned char Set_State_flag = 0;
+  17          bit dis_flag = 0;
+  18          bit flag_key = 1;
+  19          void Timer1Init(void)           //1毫秒@11.0592MHz
+  20          {
+  21   1              AUXR |= 0x40;           //定时器时钟1T模式
+  22   1              TMOD &= 0x0F;           //设置定时器模式
+  23   1              TMOD |= 0x10;           //设置定时器模式
+  24   1              TL1 = 0xCD;                     //设置定时初值
+  25   1              TH1 = 0xD4;             //设置定时初值
+  26   1              TF1 = 0;                //清除TF1标志
+  27   1              TR1 = 1;                //定时器1开始计时
+  28   1              ET1 = 1;
+  29   1      }
+  30          void Delay5ms()         //@11.0592MHz
+  31          {
+  32   1              unsigned char i, j;
+  33   1      
+  34   1              i = 54;
+  35   1              j = 199;
+  36   1              do
+  37   1              {
+  38   2                      while (--j);
+  39   2              } while (--i);
+  40   1      }
+  41          void Delay100us()               //@11.0592MHz
+  42          {
+  43   1              unsigned char i, j;
+  44   1      
+  45   1              _nop_();
+  46   1              _nop_();
+  47   1              i = 2;
+  48   1              j = 15;
+  49   1              do
+  50   1              {
+  51   2                      while (--j);
+  52   2              } while (--i);
+  53   1      }
+  54          void main()
+  55          {
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 2   
+
+  56   1              Timer1Init();
+  57   1              Old_Temp_dat_[0] = IIC_read_dat(0xa0 ,0x00);
+  58   1              Delay5ms();
+  59   1              Old_Temp_dat_[1] = IIC_read_dat(0xa0 ,0x01);
+  60   1              Delay5ms();
+  61   1              Old_Temp_dat_[2] = IIC_read_dat(0xa0 ,0x02);
+  62   1              Delay5ms();
+  63   1              Old_Temp_dat_[3] = IIC_read_dat(0xa0 ,0x03);
+  64   1              Delay5ms();
+  65   1              Old_Temp_dat_[4] = IIC_read_dat(0xa0 ,0x04);
+  66   1              Delay5ms();
+  67   1              Old_Temp_dat_[5] = IIC_read_dat(0xa0 ,0x05);
+  68   1              Delay5ms();
+  69   1              Old_Temp_dat_[6] = IIC_read_dat(0xa0 ,0x06);
+  70   1              Delay5ms();
+  71   1              Old_Temp_dat_[7] = IIC_read_dat(0xa0 ,0x07);
+  72   1              Delay5ms();
+  73   1              Old_Temp_dat_[8] = IIC_read_dat(0xa0 ,0x08);
+  74   1              Delay5ms();
+  75   1              Old_Temp_dat_[9] = IIC_read_dat(0xa0 ,0x09);
+  76   1              Delay5ms();
+  77   1              set_temp[0] = IIC_read_dat(0xa0 ,0x0a);
+  78   1              Delay5ms();
+  79   1              set_temp[1] = IIC_read_dat(0xa0 ,0x0b);
+  80   1              Delay5ms();
+  81   1      
+  82   1              EA = 1;
+  83   1              while(1)
+  84   1              {
+  85   2                      if((key_State_flag == 0)&&(Set_State_flag == 0))
+  86   2                      {
+  87   3                              display_cache[0]=10;
+  88   3                              display_cache[1]=10;
+  89   3                              display_cache[2]=10;
+  90   3                              display_cache[3]=10;
+  91   3                              display_cache[4]= temp /1000;
+  92   3                              display_cache[5]= temp /100 %10;
+  93   3                              display_cache[6]= temp /10 %10;
+  94   3                              display_cache[7]= temp %10;
+  95   3                      }
+  96   2                      else if((key_State_flag == 1)&&(Set_State_flag == 0))
+  97   2                      {
+  98   3                              display_cache[0]=11;
+  99   3                              display_cache[1]=1;
+ 100   3                              display_cache[2]=11;
+ 101   3                              display_cache[3]=10;
+ 102   3                              display_cache[4]=10;
+ 103   3                              display_cache[5]=10;
+ 104   3                              display_cache[6]= Old_Temp_dat_[0] /10 %10;
+ 105   3                              display_cache[7]= Old_Temp_dat_[0] %10;
+ 106   3                      }
+ 107   2                      else if((key_State_flag == 2)&&(Set_State_flag == 0))
+ 108   2                      {
+ 109   3                              display_cache[0]=11;
+ 110   3                              display_cache[1]=2;
+ 111   3                              display_cache[2]=11;
+ 112   3                              display_cache[3]=10;
+ 113   3                              display_cache[4]=10;
+ 114   3                              display_cache[5]=10;
+ 115   3                              display_cache[6]= Old_Temp_dat_[1] /10 %10;
+ 116   3                              display_cache[7]= Old_Temp_dat_[1] %10;
+ 117   3                      }
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 3   
+
+ 118   2                      else if((key_State_flag == 3)&&(Set_State_flag == 0))
+ 119   2                      {
+ 120   3                              display_cache[0]=11;
+ 121   3                              display_cache[1]=3;
+ 122   3                              display_cache[2]=11;
+ 123   3                              display_cache[3]=10;
+ 124   3                              display_cache[4]=10;
+ 125   3                              display_cache[5]=10;
+ 126   3                              display_cache[6]= Old_Temp_dat_[2] /10 %10;
+ 127   3                              display_cache[7]= Old_Temp_dat_[2] %10;
+ 128   3                      }
+ 129   2                      else if((key_State_flag == 4)&&(Set_State_flag == 0))
+ 130   2                      {
+ 131   3                              display_cache[0]=11;
+ 132   3                              display_cache[1]=4;
+ 133   3                              display_cache[2]=11;
+ 134   3                              display_cache[3]=10;
+ 135   3                              display_cache[4]=10;
+ 136   3                              display_cache[5]=10;
+ 137   3                              display_cache[6]= Old_Temp_dat_[3] /10 %10;
+ 138   3                              display_cache[7]= Old_Temp_dat_[3] %10;
+ 139   3                      }
+ 140   2                      else if((key_State_flag == 5)&&(Set_State_flag == 0))
+ 141   2                      {
+ 142   3                              display_cache[0]=11;
+ 143   3                              display_cache[1]=5;
+ 144   3                              display_cache[2]=11;
+ 145   3                              display_cache[3]=10;
+ 146   3                              display_cache[4]=10;
+ 147   3                              display_cache[5]=10;
+ 148   3                              display_cache[6]= Old_Temp_dat_[4] /10 %10;
+ 149   3                              display_cache[7]= Old_Temp_dat_[4] %10;
+ 150   3                      }
+ 151   2                      else if((key_State_flag == 6)&&(Set_State_flag == 0))
+ 152   2                      {
+ 153   3                              display_cache[0]=11;
+ 154   3                              display_cache[1]=6;
+ 155   3                              display_cache[2]=11;
+ 156   3                              display_cache[3]=10;
+ 157   3                              display_cache[4]=10;
+ 158   3                              display_cache[5]=10;
+ 159   3                              display_cache[6]= Old_Temp_dat_[5] /10 %10;
+ 160   3                              display_cache[7]= Old_Temp_dat_[5] %10;
+ 161   3                      }
+ 162   2                      else if((key_State_flag == 7)&&(Set_State_flag == 0))
+ 163   2                      {
+ 164   3                              display_cache[0]=11;
+ 165   3                              display_cache[1]=7;
+ 166   3                              display_cache[2]=11;
+ 167   3                              display_cache[3]=10;
+ 168   3                              display_cache[4]=10;
+ 169   3                              display_cache[5]=10;
+ 170   3                              display_cache[6]= Old_Temp_dat_[6] /10 %10;
+ 171   3                              display_cache[7]= Old_Temp_dat_[6] %10;
+ 172   3                      }
+ 173   2                      else if((key_State_flag == 8)&&(Set_State_flag == 0))
+ 174   2                      {
+ 175   3                              display_cache[0]=11;
+ 176   3                              display_cache[1]=8;
+ 177   3                              display_cache[2]=11;
+ 178   3                              display_cache[3]=10;
+ 179   3                              display_cache[4]=10;
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 4   
+
+ 180   3                              display_cache[5]=10;
+ 181   3                              display_cache[6]= Old_Temp_dat_[7] /10 %10;
+ 182   3                              display_cache[7]= Old_Temp_dat_[7] %10;
+ 183   3                      }
+ 184   2                      else if((key_State_flag == 9)&&(Set_State_flag == 0))
+ 185   2                      {
+ 186   3                              display_cache[0]=11;
+ 187   3                              display_cache[1]=9;
+ 188   3                              display_cache[2]=11;
+ 189   3                              display_cache[3]=10;
+ 190   3                              display_cache[4]=10;
+ 191   3                              display_cache[5]=10;
+ 192   3                              display_cache[6]= Old_Temp_dat_[8] /10 %10;
+ 193   3                              display_cache[7]= Old_Temp_dat_[8] %10;
+ 194   3                      }
+ 195   2                      else if((key_State_flag == 10)&&(Set_State_flag == 0))
+ 196   2                      {
+ 197   3                              display_cache[0]=11;
+ 198   3                              display_cache[1]=1;
+ 199   3                              display_cache[2]=0;
+ 200   3                              display_cache[3]=11;
+ 201   3                              display_cache[4]=10;
+ 202   3                              display_cache[5]=10;
+ 203   3                              display_cache[6]= Old_Temp_dat_[9] /10 %10;
+ 204   3                              display_cache[7]= Old_Temp_dat_[9] %10;
+ 205   3                      }
+ 206   2                      else if((key_State_flag == 0)&&(Set_State_flag == 1)&&(dis_flag == 0))
+ 207   2                      {
+ 208   3                              display_cache[0]=set_temp[0] /10 %10;
+ 209   3                              display_cache[1]=set_temp[0] %10;
+ 210   3                              display_cache[2]=10;
+ 211   3                              display_cache[3]=10;
+ 212   3                              display_cache[4]=10;
+ 213   3                              display_cache[5]=10;
+ 214   3                              display_cache[6]= set_temp[1] /10 %10;
+ 215   3                              display_cache[7]= set_temp[1] %10;
+ 216   3                      }
+ 217   2                      else if((key_State_flag == 0)&&(Set_State_flag == 1)&&dis_flag)
+ 218   2                      {
+ 219   3                              display_cache[0]=10;
+ 220   3                              display_cache[1]=10;
+ 221   3                              display_cache[2]=10;
+ 222   3                              display_cache[3]=10;
+ 223   3                              display_cache[4]=10;
+ 224   3                              display_cache[5]=10;
+ 225   3                              display_cache[6]= set_temp[1] /10 %10;
+ 226   3                              display_cache[7]= set_temp[1] %10;
+ 227   3                      }
+ 228   2                      else if((key_State_flag == 0)&&(Set_State_flag == 2)&&(dis_flag == 0))
+ 229   2                      {
+ 230   3                              display_cache[0]=set_temp[0] /10 %10;
+ 231   3                              display_cache[1]=set_temp[0] %10;
+ 232   3                              display_cache[2]=10;
+ 233   3                              display_cache[3]=10;
+ 234   3                              display_cache[4]=10;
+ 235   3                              display_cache[5]=10;
+ 236   3                              display_cache[6]=10;
+ 237   3                              display_cache[7]=10;
+ 238   3                      }
+ 239   2                      else if((key_State_flag == 0)&&(Set_State_flag == 2)&&dis_flag)
+ 240   2                      {
+ 241   3                              display_cache[0]=set_temp[0] /10 %10;
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 5   
+
+ 242   3                              display_cache[1]=set_temp[0] %10;
+ 243   3                              display_cache[2]=10;
+ 244   3                              display_cache[3]=10;
+ 245   3                              display_cache[4]=10;
+ 246   3                              display_cache[5]=10;
+ 247   3                              display_cache[6]= set_temp[1] /10 %10;
+ 248   3                              display_cache[7]= set_temp[1] %10;
+ 249   3                      }
+ 250   2                      if(set_temp[0] < save_temp)
+ 251   2                      {
+ 252   3                              
+ 253   3                              P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 254   3                              P0=0xbf;
+ 255   3                              P2=P2&0x1f;
+ 256   3                              Delay100us();
+ 257   3                              P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 258   3                              P0=0xff;
+ 259   3                              P2=P2&0x1f;
+ 260   3                              Delay100us();
+ 261   3                      }
+ 262   2                      else if(set_temp[1] > save_temp)
+ 263   2                      {
+ 264   3                              
+ 265   3                              P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 266   3                              P0=0xbf;
+ 267   3                              P2=P2&0x1f;
+ 268   3                              Delay100us();
+ 269   3                              P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 270   3                              P0=0xff;
+ 271   3                              P2=P2&0x1f;
+ 272   3                              Delay100us();
+ 273   3                      }
+ 274   2                      else
+ 275   2                      {
+ 276   3                              P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 277   3                              P0=0xff;
+ 278   3                              P2=P2&0x1f;
+ 279   3                      }
+ 280   2              }
+ 281   1      }
+ 282          
+ 283          
+ 284          void time1() interrupt 3
+ 285          {
+ 286   1              TL1 = 0xCD;             //设置定时初值
+ 287   1              TH1 = 0xD4;             //设置定时初值
+ 288   1              display( display_cache );
+ 289   1              key_value = key();
+ 290   1              if((key_value != 0xff)&&flag_key)
+ 291   1              {
+ 292   2                      flag_key = 0;
+ 293   2                      Delay100us();
+ 294   2                      if(key_value == S4)
+ 295   2                      {
+ 296   3                              key_State_flag = ++key_State_flag % 11;
+ 297   3                              Set_State_flag = 0;
+ 298   3                      }
+ 299   2                      else if(key_value == S5)        
+ 300   2                      {
+ 301   3                              key_State_flag = 0;
+ 302   3                              Set_State_flag = ++Set_State_flag % 3;
+ 303   3                              
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 6   
+
+ 304   3                      }       
+ 305   2                      else if(key_value == S6)        
+ 306   2                      {
+ 307   3                              if(Set_State_flag == 1)
+ 308   3                              {
+ 309   4                                        set_temp[0]++;  if( set_temp[0] >99)  set_temp[0] =0;
+ 310   4                                        IIC_send_dat(0xa0 ,0x0a ,set_temp[0]);
+ 311   4                              }
+ 312   3                              else if(Set_State_flag == 2)
+ 313   3                              {
+ 314   4                                        set_temp[1]++;  if( set_temp[1] >99)  set_temp[1] =0;
+ 315   4                                        IIC_send_dat(0xa0 ,0x0b ,set_temp[1]);
+ 316   4                              }
+ 317   3              
+ 318   3                               
+ 319   3                      }       
+ 320   2                      else if(key_value == S7)        
+ 321   2                      {
+ 322   3                              if(Set_State_flag == 1)
+ 323   3                              {
+ 324   4                                        set_temp[0]--;   
+ 325   4                                        if( set_temp[0] <0)  
+ 326   4                                                      set_temp[0] =99;   
+ 327   4                                        IIC_send_dat(0xa0 ,0x0a ,set_temp[0]);
+ 328   4                              }
+ 329   3                              else if(Set_State_flag == 2)
+ 330   3                              {
+ 331   4                                        set_temp[1]--;   
+ 332   4                                        if( set_temp[1] <0)  
+ 333   4                                                      set_temp[1] =99;
+ 334   4                                    IIC_send_dat(0xa0 ,0x0b ,set_temp[1]);
+ 335   4                              }
+ 336   3              
+ 337   3                      }
+ 338   2              }
+ 339   1              else if(key_value == 0xff)
+ 340   1              {
+ 341   2                      flag_key = 1;
+ 342   2              }
+ 343   1              if((count_save_temp %500) == 0)
+ 344   1              {
+ 345   2                      temp = rd_temperature()*6.25;
+ 346   2                      dis_flag = ~dis_flag;
+ 347   2              }
+ 348   1      
+ 349   1              if(count_save_temp<2000)
+ 350   1              {
+ 351   2                      count_save_temp++;
+ 352   2      
+ 353   2              }else
+ 354   1              {
+ 355   2                      count_save_temp = 0;
+ 356   2                      
+ 357   2                      save_temp = temp /1000 *10 + temp /100 %10;;
+ 358   2                      Old_Temp_dat_[9] = Old_Temp_dat_[8];
+ 359   2                      IIC_send_dat(0xa0 ,0x09 ,Old_Temp_dat_[9]);
+ 360   2                      Delay5ms();
+ 361   2                      Old_Temp_dat_[8] = Old_Temp_dat_[7];
+ 362   2                      IIC_send_dat(0xa0 ,0x08 ,Old_Temp_dat_[8]);
+ 363   2                      Delay5ms();
+ 364   2                      Old_Temp_dat_[7] = Old_Temp_dat_[6];
+ 365   2                      IIC_send_dat(0xa0 ,0x07 ,Old_Temp_dat_[7]);
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 14:34:13 PAGE 7   
+
+ 366   2                      Delay5ms();
+ 367   2                      Old_Temp_dat_[6] = Old_Temp_dat_[5];
+ 368   2                      IIC_send_dat(0xa0 ,0x06 ,Old_Temp_dat_[6]);
+ 369   2                      Delay5ms();
+ 370   2                      Old_Temp_dat_[5] = Old_Temp_dat_[4];
+ 371   2                      IIC_send_dat(0xa0 ,0x05 ,Old_Temp_dat_[5]);
+ 372   2                      Delay5ms();
+ 373   2                      Old_Temp_dat_[4] = Old_Temp_dat_[3];
+ 374   2                      IIC_send_dat(0xa0 ,0x04 ,Old_Temp_dat_[4]);
+ 375   2                      Delay5ms();
+ 376   2                      Old_Temp_dat_[3] = Old_Temp_dat_[2];
+ 377   2                      IIC_send_dat(0xa0 ,0x03 ,Old_Temp_dat_[3]);
+ 378   2                      Delay5ms();
+ 379   2                      Old_Temp_dat_[2] = Old_Temp_dat_[1]; 
+ 380   2                      IIC_send_dat(0xa0 ,0x02 ,Old_Temp_dat_[2]);
+ 381   2                      Delay5ms();
+ 382   2                      Old_Temp_dat_[1] = Old_Temp_dat_[0];
+ 383   2                      IIC_send_dat(0xa0 ,0x01 ,Old_Temp_dat_[1]);
+ 384   2                      Delay5ms();
+ 385   2                      Old_Temp_dat_[0] = save_temp;
+ 386   2                      IIC_send_dat(0xa0 ,0x00 ,Old_Temp_dat_[0]);
+ 387   2                      Delay5ms();
+ 388   2              }
+ 389   1      
+ 390   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1644    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     30    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

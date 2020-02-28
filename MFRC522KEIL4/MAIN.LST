@@ -1,0 +1,362 @@
+C51 COMPILER V9.00   MAIN                                                                  10/19/2019 19:28:37 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN MAIN.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE MAIN.C COMPACT BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include "main.h"
+   3          #include "LCD12864.h"
+   4          #include "mfrc522.h"    
+   5          
+   6          unsigned char code DefaultKey[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};                 //卡片密钥  
+   7          unsigned char idata MLastSelectedSnr[4];                                                                                //卡片UID存放Cache
+   8          unsigned char idata RevBuffer[16];                                                                                      //读取数据存放
+   9          unsigned char data SerBuffer[16];                                                                                               //发送数据存放
+  10          
+  11          struct User{                              //定义用户数据
+  12                  int Apparel_Orders;
+  13                  int Price;
+  14                  int Inventory;
+  15                  int Shipments;
+  16          }User_Data;
+  17          
+  18          
+  19          void InitializeSystem()                          //初始化天线
+  20          {
+  21   1              P0 = 0xFF; P1 = 0xFF; P3 = 0xFF; 
+  22   1      
+  23   1                              
+  24   1              PcdReset();               //RC522初始化
+  25   1              PcdAntennaOff(); //关闭天线
+  26   1              PcdAntennaOn();  //打开天线
+  27   1              M500PcdConfigISOType( 'A' ); //设置卡类型为A
+  28   1              delay_1ms(10);  
+  29   1              
+  30   1      }
+  31          
+  32          
+  33          void LCD12864_Display_num(unsigned char x,unsigned char y,unsigned int z){               //LCD在指定位置显示四位数字
+  34   1      
+  35   1              unsigned char display_code[5];
+  36   1      
+  37   1              display_code[0] = z/1000+48;
+  38   1              display_code[1] = z/100%10+48;
+  39   1              display_code[2] = z/10%10+48;
+  40   1              display_code[3] = z%10+48;
+  41   1              display_code[4] = '\0';
+  42   1              lcd_pos(x,y);           
+  43   1              write_str(display_code);
+  44   1      }
+  45          
+  46          
+  47          void Rx_Data_Parsing(unsigned char *Rx_Data){            //接收数据解析
+  48   1              User_Data.Apparel_Orders = Rx_Data[0];
+  49   1              User_Data.Apparel_Orders = User_Data.Apparel_Orders <<8;
+  50   1              User_Data.Apparel_Orders |= Rx_Data[1];
+  51   1      
+  52   1              User_Data.Price = Rx_Data[2];
+  53   1              User_Data.Price = User_Data.Price <<8;
+  54   1              User_Data.Price |= Rx_Data[3];
+  55   1      
+C51 COMPILER V9.00   MAIN                                                                  10/19/2019 19:28:37 PAGE 2   
+
+  56   1              User_Data.Inventory = Rx_Data[4];
+  57   1              User_Data.Inventory = User_Data.Inventory <<8;
+  58   1              User_Data.Inventory |= Rx_Data[5];
+  59   1      
+  60   1              User_Data.Shipments = Rx_Data[6];
+  61   1              User_Data.Shipments = User_Data.Shipments <<8;
+  62   1              User_Data.Shipments |= Rx_Data[7];
+  63   1      }
+  64          
+  65          void Tx_Data_Parsing(){            //发送数据解析
+  66   1      
+  67   1              SerBuffer[0] =   (User_Data.Apparel_Orders >>8) & 0x00ff;
+  68   1              SerBuffer[1] =   User_Data.Apparel_Orders & 0x00ff;
+  69   1      
+  70   1              SerBuffer[2] =   (User_Data.Price >>8) & 0x00ff;
+  71   1              SerBuffer[3] =   User_Data.Price & 0x00ff;
+  72   1      
+  73   1              SerBuffer[4] =   (User_Data.Inventory >>8) & 0x00ff;
+  74   1              SerBuffer[5] =   User_Data.Inventory & 0x00ff;
+  75   1      
+  76   1              SerBuffer[6] =   (User_Data.Shipments >>8) & 0x00ff;
+  77   1              SerBuffer[7] =   User_Data.Shipments & 0x00ff;
+  78   1      
+  79   1      }
+  80          
+  81          unsigned char key_scan(){                         //获取独立键值 
+  82   1              unsigned char key_value = 0x00;
+  83   1              key_value = key_value | KEY4;
+  84   1              key_value = key_value << 1;
+  85   1      
+  86   1              key_value = key_value | KEY3;
+  87   1              key_value = key_value << 1;
+  88   1      
+  89   1              key_value = key_value | KEY2;
+  90   1              key_value = key_value << 1;
+  91   1      
+  92   1              key_value = key_value | KEY1;
+  93   1      
+  94   1              return key_value;
+  95   1      }
+  96          void main()
+  97          {   
+  98   1              
+  99   1              unsigned char count_for = 0;
+ 100   1              unsigned char key_state = 1;
+ 101   1              bit set_flag = 0;
+ 102   1          InitializeSystem( );
+ 103   1              lcd_init(); 
+ 104   1              lcd_pos(0,2);                           //指定显示位置
+ 105   1              write_str("欢迎使用");          //显示数据
+ 106   1              lcd_pos(1,0);                   
+ 107   1              write_str("服装仓储管理系统");
+ 108   1              lcd_pos(3,0);                   
+ 109   1              write_str("录入");
+ 110   1              lcd_pos(3,6);                           
+ 111   1              write_str("读取");
+ 112   1              User_Data.Apparel_Orders = 0;
+ 113   1              User_Data.Price = 0;
+ 114   1              User_Data.Inventory = 0;
+ 115   1              User_Data.Shipments = 0; 
+ 116   1      
+ 117   1          while(1)
+C51 COMPILER V9.00   MAIN                                                                  10/19/2019 19:28:37 PAGE 3   
+
+ 118   1          {   
+ 119   2                      switch(key_scan()){
+ 120   3      
+ 121   3                              case Rfid_Button1 : 
+ 122   3                                      while(1){
+ 123   4                                              lcd_init(); 
+ 124   4                                              lcd_pos(0,0);                   
+ 125   4                                              write_str("服装类目");
+ 126   4                                              lcd_pos(1,0);                   
+ 127   4                                              write_str("单价:   ");
+ 128   4                                              lcd_pos(2,0);                   
+ 129   4                                              write_str("库存:   ");
+ 130   4                                              lcd_pos(3,0);           
+ 131   4                                              write_str("出货量: ");
+ 132   4                                              
+ 133   4                                              while(1){
+ 134   5                                                      delay_1ms(1000);                           //按键防抖与放缓显示刷新
+ 135   5                                                      set_flag = ~set_flag;              //设置标识判断位
+ 136   5                                                      if(Rfid_Button2 == key_scan())     //跳出设置进入写
+ 137   5                                                      {
+ 138   6                                                              break;
+ 139   6                                                      }
+ 140   5                                                      LCD12864_Display_num(0,5,User_Data.Apparel_Orders);
+ 141   5                                                      LCD12864_Display_num(1,5,User_Data.Price);
+ 142   5                                                      LCD12864_Display_num(2,5,User_Data.Inventory);
+ 143   5                                                      LCD12864_Display_num(3,5,User_Data.Shipments);
+ 144   5      
+ 145   5                                                      switch(key_state){
+ 146   6                                                              case 1 :if(Rfid_Button3 == key_scan())                    //判断加减
+ 147   6                                                                                      User_Data.Apparel_Orders++; 
+ 148   6                                                                              else if(Rfid_Button4 == key_scan())
+ 149   6                                                                                      User_Data.Apparel_Orders--;
+ 150   6                                                                              if(User_Data.Apparel_Orders < 0)                   //数据越界判断
+ 151   6                                                                                      User_Data.Apparel_Orders = 0;
+ 152   6                                                                              else if(User_Data.Apparel_Orders >9999)
+ 153   6                                                                                      User_Data.Apparel_Orders =9999;
+ 154   6                                                                              if(set_flag){                                   //显示设置标志
+ 155   7                                                                                      lcd_pos(0,4);                           //指定显示位置
+ 156   7                                                                                      write_str(":_");
+ 157   7                                                                              }else{                                                  //清除设置标志
+ 158   7                                                                                      lcd_pos(0,4);                           //指定显示位置
+ 159   7                                                                                      write_str(": ");
+ 160   7                                                                              }
+ 161   6                                                                              lcd_pos(1,4);                           //清除其他位设置标志
+ 162   6                                                                              write_str("  ");
+ 163   6                                                                              lcd_pos(2,4);                           
+ 164   6                                                                              write_str("  ");
+ 165   6                                                                              lcd_pos(3,4);                   
+ 166   6                                                                              write_str("  ");
+ 167   6                                                                              LCD12864_Display_num(0,5,User_Data.Apparel_Orders);
+ 168   6                                                                      break;
+ 169   6                                                              case 2 :if(Rfid_Button3 == key_scan())                          //判断加减
+ 170   6                                                                                      User_Data.Price++; 
+ 171   6                                                                              else if(Rfid_Button4 == key_scan())
+ 172   6                                                                                      User_Data.Price--;
+ 173   6                                                                              if(User_Data.Price < 0)                                         //数据越界判断
+ 174   6                                                                                      User_Data.Price = 0;
+ 175   6                                                                              else if(User_Data.Price >9999)
+ 176   6                                                                                      User_Data.Price =9999;
+ 177   6                                                                              if(set_flag){
+ 178   7                                                                                      lcd_pos(1,4);                   
+ 179   7                                                                                      write_str(" _");
+C51 COMPILER V9.00   MAIN                                                                  10/19/2019 19:28:37 PAGE 4   
+
+ 180   7                                                                              }else{
+ 181   7                                                                                      lcd_pos(1,4);           
+ 182   7                                                                                      write_str("  ");
+ 183   7                                                                              }
+ 184   6                                                                              lcd_pos(0,4);                           //清除其他位设置标志
+ 185   6                                                                              write_str(": ");
+ 186   6                                                                              lcd_pos(2,4);                   
+ 187   6                                                                              write_str("  ");
+ 188   6                                                                              lcd_pos(3,4);                   
+ 189   6                                                                              write_str("  ");
+ 190   6                                                                              LCD12864_Display_num(1,5,User_Data.Price);
+ 191   6                                                                      break;
+ 192   6                                                              case 3 :if(Rfid_Button3 == key_scan())                   //判断加减
+ 193   6                                                                                      User_Data.Inventory++; 
+ 194   6                                                                              else if(Rfid_Button4 == key_scan())
+ 195   6                                                                                      User_Data.Inventory--;
+ 196   6                                                                              if(User_Data.Inventory < 0)                             //数据越界判断
+ 197   6                                                                                      User_Data.Inventory = 0;
+ 198   6                                                                              else if(User_Data.Inventory >9999)
+ 199   6                                                                                      User_Data.Inventory =9999;
+ 200   6                                                                              if(set_flag){
+ 201   7                                                                                      lcd_pos(2,4);                   
+ 202   7                                                                                      write_str(" _");
+ 203   7                                                                              }else{
+ 204   7                                                                                      lcd_pos(2,4);   
+ 205   7                                                                                      write_str("  ");
+ 206   7                                                                              }
+ 207   6                                                                              lcd_pos(0,4);                           //清除其他位设置标志
+ 208   6                                                                              write_str(": ");
+ 209   6                                                                              lcd_pos(1,4);                   
+ 210   6                                                                              write_str("  ");
+ 211   6                                                                              lcd_pos(3,4);                   
+ 212   6                                                                              write_str("  ");
+ 213   6                                                                              LCD12864_Display_num(2,5,User_Data.Inventory);
+ 214   6                                                                      break;
+ 215   6                                                              case 4 :if(Rfid_Button3 == key_scan())    //判断加减
+ 216   6                                                                                      User_Data.Shipments++; 
+ 217   6                                                                              else if(Rfid_Button4 == key_scan())
+ 218   6                                                                                      User_Data.Shipments--;
+ 219   6                                                                              if(User_Data.Shipments < 0)
+ 220   6                                                                                      User_Data.Shipments = 0;
+ 221   6                                                                              else if(User_Data.Shipments >9999)
+ 222   6                                                                                      User_Data.Shipments =9999;
+ 223   6                                                                              if(set_flag){
+ 224   7                                                                                      lcd_pos(3,4);           
+ 225   7                                                                                      write_str(" _");
+ 226   7                                                                              }else{
+ 227   7                                                                                      lcd_pos(3,4);           
+ 228   7                                                                                      write_str("  ");
+ 229   7                                                                              }
+ 230   6                                                                              lcd_pos(0,4);                   //清除其他位设置标志
+ 231   6                                                                              write_str(": ");
+ 232   6                                                                              lcd_pos(1,4);           
+ 233   6                                                                              write_str("  ");
+ 234   6                                                                              lcd_pos(2,4);                   
+ 235   6                                                                              write_str("  ");
+ 236   6                                                                              LCD12864_Display_num(3,5,User_Data.Shipments);
+ 237   6                                                                      break;
+ 238   6                                                              default : break;
+ 239   6                                                              }
+ 240   5                                                              if(Rfid_Button1 == key_scan())     //进入设置
+ 241   5                                                              {
+C51 COMPILER V9.00   MAIN                                                                  10/19/2019 19:28:37 PAGE 5   
+
+ 242   6                                                                      key_state = key_state % 4;
+ 243   6                                                                      key_state++;
+ 244   6                                                              }               
+ 245   5                                                      }
+ 246   4                                                      
+ 247   4                                                      lcd_init();     
+ 248   4                                                      lcd_pos(0,0);                   
+ 249   4                                                      write_str("请将卡片放置在读");
+ 250   4                                                      lcd_pos(1,0);                   
+ 251   4                                                      write_str("卡器上");
+ 252   4                                                      lcd_pos(2,0);                   
+ 253   4                                                      write_str("准备写入....");
+ 254   4              
+ 255   4      //                                              while(0 != PcdHalt())；
+ 256   4                                                      while(0 != PcdRequest(RFCfgReg,&MLastSelectedSnr[0]));      //读取卡片类型      
+ 257   4                                                      while(0 != PcdAnticoll(&MLastSelectedSnr[0]));                     // 读取卡片UID
+ 258   4                                                      while(0 != PcdSelect(MLastSelectedSnr));                                  //选中卡片
+ 259   4                                                      while(0 != PcdAuthState(PICC_AUTHENT1A,4,DefaultKey,MLastSelectedSnr));    //发送密钥
+ 260   4                                                      Tx_Data_Parsing();      //解析要发送的数据
+ 261   4                                                      while(0 != PcdWrite(4,&SerBuffer));                                                      //指定位置写入数据
+ 262   4      
+ 263   4                                                      lcd_init();                     //初始菜单
+ 264   4                                                      lcd_pos(0,0);   
+ 265   4                                                      write_str("写入成功");
+ 266   4                                                      delay_1ms(15000);
+ 267   4                                                      lcd_init(); 
+ 268   4                                                      lcd_pos(0,2);           
+ 269   4                                                      write_str("欢迎使用");
+ 270   4                                                      lcd_pos(1,0);           
+ 271   4                                                      write_str("服装仓储管理系统");
+ 272   4                                                      lcd_pos(3,0);                   
+ 273   4                                                      write_str("录入");
+ 274   4                                                      lcd_pos(3,6);           
+ 275   4                                                      write_str("读取");
+ 276   4                                                      break;
+ 277   4                                              }
+ 278   3                                      break;
+ 279   3      
+ 280   3                              case Rfid_Button2 : 
+ 281   3                                              lcd_init();     
+ 282   3                                              lcd_pos(0,0);                   
+ 283   3                                              write_str("请将卡片放置在读");
+ 284   3                                              lcd_pos(1,0);                   
+ 285   3                                              write_str("卡器上");
+ 286   3                                              lcd_pos(2,0);                   
+ 287   3                                              write_str("准备读取....");
+ 288   3      
+ 289   3      //                                      while(0 != PcdHalt());
+ 290   3                                              while(0 != PcdRequest(RFCfgReg,&MLastSelectedSnr[0]));           //读取卡片类型
+ 291   3                                              while(0 != PcdAnticoll(&MLastSelectedSnr[0]));                           //读取卡片UID
+ 292   3                                              while(0 != PcdSelect(MLastSelectedSnr));                                                //选中卡片
+ 293   3                                              while(0 != PcdAuthState(PICC_AUTHENT1A,4,DefaultKey,MLastSelectedSnr)); //发送密钥
+ 294   3                                              while(0 != PcdRead(4,&RevBuffer));                                                      //读取指定位置的数据
+ 295   3                                              lcd_init();     
+ 296   3                                              lcd_pos(0,0);                           //指定显示位置
+ 297   3                                              write_str("读卡成功！");
+ 298   3                                              delay_1ms(5000);
+ 299   3                                              Rx_Data_Parsing(&RevBuffer);
+ 300   3                                              lcd_init(); 
+ 301   3                                              lcd_pos(0,0);                   
+ 302   3                                              write_str("服装类目 :");
+ 303   3                                              lcd_pos(1,0);                   
+C51 COMPILER V9.00   MAIN                                                                  10/19/2019 19:28:37 PAGE 6   
+
+ 304   3                                              write_str("单价     :");
+ 305   3                                              lcd_pos(2,0);                   
+ 306   3                                              write_str("库存     :");
+ 307   3                                              lcd_pos(3,0);                   
+ 308   3                                              write_str("出货量   :");
+ 309   3                                              LCD12864_Display_num(0,5,User_Data.Apparel_Orders);             //显示读取数据
+ 310   3                                              LCD12864_Display_num(1,5,User_Data.Price);
+ 311   3                                              LCD12864_Display_num(2,5,User_Data.Inventory);
+ 312   3                                              LCD12864_Display_num(3,5,User_Data.Shipments);
+ 313   3                                              delay_1ms(15000);
+ 314   3                                              lcd_init();                                     //初始菜单
+ 315   3                                              lcd_pos(0,2);                           
+ 316   3                                              write_str("欢迎使用");
+ 317   3                                              lcd_pos(1,0);                   
+ 318   3                                              write_str("服装仓储管理系统");
+ 319   3                                              lcd_pos(3,0);                   
+ 320   3                                              write_str("录入");
+ 321   3                                              lcd_pos(3,6);                   
+ 322   3                                              write_str("读取");
+ 323   3                                              break;
+ 324   3      
+ 325   3                              default : break;
+ 326   3                      }
+ 327   2              }
+ 328   1      
+ 329   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1972    ----
+   CONSTANT SIZE    =    204    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =      8       9
+   DATA SIZE        =     16    ----
+   IDATA SIZE       =     20    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

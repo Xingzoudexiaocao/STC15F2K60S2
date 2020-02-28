@@ -1,0 +1,170 @@
+C51 COMPILER V9.00   DS1302                                                                11/09/2019 02:09:27 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN ds1302.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE ds1302.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "stc15f2k60s2.h"
+   2          #include "ds1302.h"
+   3          
+   4          char second,minute,hour,week,date,mouth,year;
+   5          char set_second,set_minute,set_hour,set_week,set_date,set_mouth,set_year;
+   6          char set_second_DS,set_minute_DS,set_hour_DS,set_week_DS,set_date_DS,set_mouth_DS,set_year_DS;
+   7          void DS1302_init(void)//初始化时间
+   8          {
+   9   1              WrDat_1302(W_control,0x00);//禁止写保护
+  10   1              set_second=59;
+  11   1              set_minute=20; 
+  12   1              set_hour=11;  
+  13   1              set_week=1;   
+  14   1              set_date=1;  
+  15   1              set_mouth=1; 
+  16   1              set_year=10;
+  17   1      }
+  18          void Delay200us()               //@11.0592MHz
+  19          {
+  20   1              unsigned char i, j;
+  21   1      
+  22   1              i = 3;
+  23   1              j = 35;
+  24   1              do
+  25   1              {
+  26   2                      while (--j);
+  27   2              } while (--i);
+  28   1      }
+  29          
+  30          
+  31          
+  32          
+  33          void delay(u8 i)//延时
+  34          {
+  35   1              u8 n;
+  36   1              while(i--)
+  37   1                      for(n=0;n<200;n++);
+  38   1      }
+  39          
+  40          
+  41          
+  42          void Wr_1302(u8 dat)//向指定地址写入一个字节数据函数
+  43          {
+  44   1              u8 i;
+  45   1              for(i=0;i<8;i++)
+  46   1              {
+  47   2                      DIO=dat&0x01;
+  48   2                      SCLK=0;
+  49   2                      SCLK=1;//DS_1302在上升沿是写                            
+  50   2                      dat>>=1;//八位数据或命令右移一位
+  51   2              }
+  52   1      }
+  53          u8 Rd_1302(void)//从指定地址读取一个字节数据函数
+  54          {
+  55   1              u8 i,p;
+C51 COMPILER V9.00   DS1302                                                                11/09/2019 02:09:27 PAGE 2   
+
+  56   1              DIO=1;
+  57   1              for(i=8;i>0;i--)
+  58   1              {
+  59   2                      SCLK=1;
+  60   2                      SCLK=0;//DS_1302在下降沿是读
+  61   2                      p>>=1;//接受新的1位数据前先右移一位
+  62   2                      if(DIO==1)                      
+  63   2                      p|=0x80;//p最高位接受数据，其他位保持不变
+  64   2              }
+  65   1              return p;
+  66   1      }
+  67          
+  68          void WrDat_1302(u8 dat,u8 cmd)//写字节函数
+  69          {
+  70   1              SCLK=0;//在RST由低变高之前，SCLK必须保持低电平
+  71   1              RST=0;
+  72   1              Delay200us();
+  73   1              RST=1;//RST高电平允许读/写
+  74   1              Wr_1302(dat);//写命令字节
+  75   1              Wr_1302(cmd);//写数据字节
+  76   1              RST=0;//操作完毕，禁止RST
+  77   1      }
+  78          
+  79          
+  80          u8 RdDat_1302(u8 dat)//读字节函数
+  81          {
+  82   1              u8 p;
+  83   1              SCLK=0;//在RST由低变高之前，SCLK必须保持低电平
+  84   1              RST=0;//RST高电平允许读/写
+  85   1              Delay200us();
+  86   1              RST=1;
+  87   1              Wr_1302(dat);//写命令字节
+  88   1              p=Rd_1302();//读数据字节，暂存在a中
+  89   1              RST=0;//操作完毕，禁止RST
+  90   1              return p;//返回1字节的RTC（实时时钟）数据
+  91   1      }
+  92          void Wrds1302_init(void)//写时间
+  93          {                                                                  
+  94   1              set_second_DS = set_second;
+  95   1              set_minute_DS = set_minute;
+  96   1              set_hour_DS = set_hour;
+  97   1              set_week_DS = set_week;
+  98   1              set_date_DS = set_date;
+  99   1              set_mouth_DS = set_mouth;
+ 100   1              set_year_DS = set_year;
+ 101   1              
+ 102   1              set_second_DS=D2BCD(set_second_DS);//十进制转换为BCD码
+ 103   1              set_minute_DS=D2BCD(set_minute_DS);
+ 104   1              set_hour_DS=D2BCD(set_hour_DS);
+ 105   1              set_date_DS=D2BCD(set_date_DS);
+ 106   1              set_mouth_DS=D2BCD(set_mouth_DS);
+ 107   1              set_week_DS=D2BCD(set_week_DS);
+ 108   1              set_year_DS=D2BCD(set_year_DS);
+ 109   1      
+ 110   1              WrDat_1302(W_control,0x00);//禁止写保护
+ 111   1              WrDat_1302(W_second,set_second_DS);
+ 112   1              WrDat_1302(W_minute,set_minute_DS);
+ 113   1              WrDat_1302(W_hour,set_hour_DS);
+ 114   1              WrDat_1302(W_date,set_date_DS);
+ 115   1              WrDat_1302(W_mouth,set_mouth_DS);
+ 116   1              WrDat_1302(W_week,set_week_DS);
+ 117   1              WrDat_1302(W_year,set_year_DS);
+C51 COMPILER V9.00   DS1302                                                                11/09/2019 02:09:27 PAGE 3   
+
+ 118   1              WrDat_1302(W_control,0x80);//允许写保护
+ 119   1                                                                       
+ 120   1      }
+ 121          void Rdds1302_init(void)//读取RTC数据
+ 122          {                                       
+ 123   1              second=RdDat_1302(R_second)&0x7f;
+ 124   1              second=BCD2D(second);
+ 125   1      
+ 126   1              minute=RdDat_1302(R_minute);
+ 127   1              minute=BCD2D(minute);
+ 128   1      
+ 129   1              hour=RdDat_1302(R_hour);
+ 130   1              hour=BCD2D(hour);
+ 131   1      
+ 132   1              date=RdDat_1302(R_date);
+ 133   1              date=BCD2D(date);
+ 134   1      
+ 135   1              mouth=RdDat_1302(R_mouth);
+ 136   1              mouth=BCD2D(mouth);
+ 137   1              
+ 138   1              week=RdDat_1302(R_week);
+ 139   1              week=BCD2D(week);
+ 140   1      
+ 141   1              year=RdDat_1302(R_year);
+ 142   1              year=BCD2D(year);
+ 143   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    627    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     21    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

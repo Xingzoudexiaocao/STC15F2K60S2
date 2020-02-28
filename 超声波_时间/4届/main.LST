@@ -1,0 +1,429 @@
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Program Files (x86)\keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "main.h"
+   2          #include "iic.h"
+   3          #include "display.h"
+   4          #include "key.h"
+   5          #include "ds1302.h"
+   6          sbit CSB_Tx = P1^0;
+   7          sbit CSB_Rx = P1^1;
+   8          u16 CSB_count =0; 
+   9          u16 CSB_dat =0; 
+  10          u16 CSB_dat_old = 0;
+  11          int CSB_dat_Warning = 30; 
+  12          u8 display_cache [] = {10,10,10,10,10,10,10,10};
+  13          u8 key_value = 0xff;
+  14          extern char second,minute,hour;
+  15          extern char set_second,set_minute,set_hour;
+  16          u16 time2_count = 0;
+  17          
+  18          u8 set_flag =0;
+  19          bit test_start = 0;
+  20          
+  21          bit CSB_Tx_flag = 0;
+  22          
+  23          bit test_start_state = 0;
+  24          
+  25          
+  26          void Delay1ms(unsigned int b)           //@11.0592MHz
+  27          {
+  28   1              
+  29   1              unsigned char i, j;
+  30   1              unsigned int c;
+  31   1              for(c = 0;c<b;c++){
+  32   2                      _nop_();
+  33   2                      _nop_();
+  34   2                      _nop_();
+  35   2                      i = 11;
+  36   2                      j = 190;
+  37   2                      do
+  38   2                      {
+  39   3                              while (--j);
+  40   3                      } while (--i);
+  41   2              }
+  42   1      }
+  43          
+  44          
+  45          void Delay13us()                //@11.0592MHz
+  46          {
+  47   1              unsigned char i;
+  48   1      
+  49   1              _nop_();
+  50   1              _nop_();
+  51   1              i = 33;
+  52   1              while (--i);
+  53   1      }
+  54          
+  55          void main ( void )
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 2   
+
+  56          {
+  57   1              init();
+  58   1              Timer1Init();
+  59   1              Timer2Init();
+  60   1              DS1302_init();
+  61   1              Wrds1302_init();
+  62   1              Rdds1302_init();
+  63   1              CSB_dat_Warning = IIC_read_dat(0xa0 ,0x00); 
+  64   1              IE2 = 0x04;              
+  65   1          EA = 1;
+  66   1              while(1)
+  67   1              {
+  68   2                      if(test_start&&test_start_state&&(set_flag == 0))
+  69   2                      {
+  70   3                              test_start = 0;
+  71   3                              CSB_count = 0;
+  72   3                              CSB_Tx_40khz();
+  73   3                              TR1 = 1;  //定时器开始计时
+  74   3                              while((CSB_Rx)&&(CSB_count<5));
+  75   3                              
+  76   3                              TR1 = 0;                //定时器1停止计时 
+  77   3                              TF1 = 0;                //清除TF1标志
+  78   3                              if(CSB_Rx == 0)
+  79   3                              {
+  80   4                                      CSB_dat = TH1;
+  81   4                                      CSB_dat = CSB_dat <<8;
+  82   4                                      CSB_dat |= TL1;
+  83   4                                      CSB_dat = (CSB_dat + CSB_count*65536)/650;
+  84   4                              }
+  85   3                              else
+  86   3                                      CSB_dat = CSB_dat_old;
+  87   3                              TH1 = TL1 = 0;    //清空计数器  
+  88   3                              CSB_dat_old = CSB_dat;
+  89   3                              Delay1ms(10);
+  90   3                              display_cache[0]=10;
+  91   3                              display_cache[1]=10;
+  92   3                              display_cache[2]=10;
+  93   3                              display_cache[3]=10;
+  94   3                              display_cache[4]=10;
+  95   3                              display_cache [5]= CSB_dat /100;
+  96   3                              display_cache [6]= CSB_dat /10 %10;
+  97   3                              display_cache [7]=  CSB_dat %10;
+  98   3                      }
+  99   2      
+ 100   2      
+ 101   2      
+ 102   2                              if(CSB_dat < (int)CSB_dat_Warning*1.2)             //报警
+ 103   2                              {
+ 104   3                              P2=P2&0x1f|0x80;
+ 105   3                              P0=0xfe;
+ 106   3                              P2=P2&0x1f;                     //开LD1 
+ 107   3                              Delay1ms(10);
+ 108   3                              }
+ 109   2                              if(CSB_dat < CSB_dat_Warning)
+ 110   2                              {
+ 111   3                                      
+ 112   3                                      P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 113   3                                      P0=0xbf;
+ 114   3                                      P2=P2&0x1f;
+ 115   3                                      Delay1ms(1);
+ 116   3                                      P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 117   3                                      P0=0xff;
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 3   
+
+ 118   3                                      P2=P2&0x1f;
+ 119   3                                      Delay1ms(1);
+ 120   3                              }
+ 121   2                              if(CSB_dat > CSB_dat_Warning)
+ 122   2                              {
+ 123   3                                      P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 124   3                                      P0=0xff;
+ 125   3                                      P2=P2&0x1f;
+ 126   3                                      P2=P2&0x1f|0x80;
+ 127   3                                      P0=0xff;
+ 128   3                                      P2=P2&0x1f;
+ 129   3                                      Delay1ms(20);   
+ 130   3                              }
+ 131   2                              
+ 132   2              }               
+ 133   1      }
+ 134          
+ 135          void init( void )
+ 136          {
+ 137   1              unsigned int buzzer = 0;
+ 138   1              P2=P2&0x1f|0x80;
+ 139   1              P0=0xfe;
+ 140   1              P2=P2&0x1f;                     //开LD1 
+ 141   1      
+ 142   1              P2=P2&0x1f;
+ 143   1              P2=P2&0x1f|0xc0;
+ 144   1              P0=0xff;
+ 145   1              P2=P2&0x1f;
+ 146   1      
+ 147   1              P2=P2|0xe0;
+ 148   1              P0=0x00;
+ 149   1              P2=P2&0x1f;
+ 150   1      
+ 151   1              for(;buzzer<500;buzzer++)
+ 152   1              {
+ 153   2                      Delay1ms(1);
+ 154   2                      P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 155   2                      P0=0xbf;
+ 156   2                      P2=P2&0x1f;
+ 157   2                      Delay1ms(1);
+ 158   2                      P2=P2&0x1f|0xa0;        //开蜂鸣器
+ 159   2                      P0=0xff;
+ 160   2                      P2=P2&0x1f;
+ 161   2              }
+ 162   1              P2=P2&0x1f|0x80;
+ 163   1              P0=0xFF;
+ 164   1              P2=P2&0x1f;     
+ 165   1      }
+ 166          void Timer1Init(void)           //1毫秒@11.0592MHz
+ 167          {
+ 168   1              AUXR |= 0x40;           //定时器时钟1T模式
+ 169   1              TMOD &= 0x0F;           //设置定时器模式
+ 170   1              TMOD |= 0x10;           //设置定时器模式
+ 171   1              TL1 = 0x00;             //设置定时初值
+ 172   1              TH1 = 0x00;             //设置定时初值
+ 173   1              TF1 = 0;                //清除TF1标志
+ 174   1              TR1 = 0;                //定时器1开始计时
+ 175   1              ET1 = 1;
+ 176   1      }
+ 177          
+ 178          void CSB_Tx_40khz(void)
+ 179          {
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 4   
+
+ 180   1              unsigned char for_count;
+ 181   1              for(for_count = 0 ;for_count < 8 ; for_count++)
+ 182   1              {
+ 183   2                      CSB_Tx = ~CSB_Tx;
+ 184   2                      Delay13us();
+ 185   2              }
+ 186   1      }
+ 187          void Timer2Init( void )         //1毫秒@11.0592MHz
+ 188          {
+ 189   1              AUXR |= 0x04;           //定时器时钟1T模式
+ 190   1              T2L = 0xcd;             //设置定时初值
+ 191   1              T2H = 0xd4;             //设置定时初值
+ 192   1              AUXR |= 0x10;           //定时器2开始计时
+ 193   1      }
+ 194          void time1() interrupt 3
+ 195          {
+ 196   1              TF1 = 0;
+ 197   1              TH1 = TL1 = 0;
+ 198   1              CSB_count++;
+ 199   1      }
+ 200          void time2() interrupt 12           //中断入口
+ 201          {
+ 202   1              display( display_cache );
+ 203   1              key_value = key_state();
+ 204   1              if(key_value == S7)     
+ 205   1              {
+ 206   2                      if(set_flag != 0){
+ 207   3                      }
+ 208   2                      else{
+ 209   3                              test_start_state = ~test_start_state;
+ 210   3                      }
+ 211   2                      Delay1ms(20);
+ 212   2              }
+ 213   1              else if(key_value == S6)        
+ 214   1              {
+ 215   2                      if(test_start_state)
+ 216   2                      {
+ 217   3                              set_flag = ++set_flag%2;
+ 218   3                      }
+ 219   2                      else
+ 220   2                      {
+ 221   3                              set_flag = ++set_flag%4;
+ 222   3                      }
+ 223   2                      Delay1ms(20);
+ 224   2              }       
+ 225   1              else if(key_value == S5)        
+ 226   1              {
+ 227   2                      if(test_start_state == 0)
+ 228   2                      {
+ 229   3                              if(set_flag == 1)
+ 230   3                              {
+ 231   4                                      set_hour++;      if(set_hour > 23) set_hour = 0;Wrds1302_init();
+ 232   4                              }
+ 233   3                              else if(set_flag == 2)
+ 234   3                              {
+ 235   4                                      set_minute++; if(set_minute > 59) set_minute = 0; Wrds1302_init();
+ 236   4                              }
+ 237   3                              else if(set_flag == 3)
+ 238   3                              {
+ 239   4                                      set_second++; if(set_second > 59) set_second = 0;Wrds1302_init();
+ 240   4                              }
+ 241   3                              
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 5   
+
+ 242   3                      }
+ 243   2                      else
+ 244   2                      {
+ 245   3                              if(set_flag == 1)
+ 246   3                              {
+ 247   4                                      CSB_dat_Warning++;
+ 248   4                                      if(CSB_dat_Warning > 200) 
+ 249   4                                              CSB_dat_Warning = 0; 
+ 250   4                                      IIC_send_dat(0xa0 ,0x00 ,CSB_dat_Warning); 
+ 251   4                                      Delay1ms(20);
+ 252   4                              }
+ 253   3                      }
+ 254   2                      Delay1ms(20); 
+ 255   2              }       
+ 256   1              else if(key_value == S4)        
+ 257   1              {
+ 258   2                      if(test_start_state == 0)
+ 259   2                      {
+ 260   3                              if(set_flag == 1)
+ 261   3                              {
+ 262   4                                      set_hour--;      if(set_hour < 0) set_hour = 23;   Wrds1302_init();
+ 263   4                              }
+ 264   3                              else if(set_flag == 2)
+ 265   3                              {
+ 266   4                                      set_minute--; if(set_minute < 0) set_minute = 59;       Wrds1302_init();
+ 267   4                              }
+ 268   3                              else if(set_flag == 3)
+ 269   3                              {
+ 270   4                                      set_second--; if(set_second < 0) set_second = 59;       Wrds1302_init();
+ 271   4                              }
+ 272   3                      }
+ 273   2                      else
+ 274   2                      {
+ 275   3                              if(set_flag == 1)
+ 276   3                              {
+ 277   4                                       CSB_dat_Warning--;     
+ 278   4                                       if(CSB_dat_Warning < 0) 
+ 279   4                                              CSB_dat_Warning = 200; 
+ 280   4                                       IIC_send_dat(0xa0 ,0x00 ,CSB_dat_Warning); 
+ 281   4                                       Delay1ms(20);
+ 282   4                              }
+ 283   3                      }
+ 284   2                      Delay1ms(20);
+ 285   2              }
+ 286   1              if(key_value == (Key_down_long | S4))   
+ 287   1              {
+ 288   2      
+ 289   2              }
+ 290   1              if(time2_count <400)
+ 291   1              {
+ 292   2                      time2_count++;  
+ 293   2      
+ 294   2              }
+ 295   1              else
+ 296   1              {
+ 297   2                      time2_count=0;
+ 298   2                      test_start = ~test_start;
+ 299   2                      
+ 300   2              }
+ 301   1              if((test_start_state == 0)&&(set_flag == 0))
+ 302   1              {
+ 303   2                      Rdds1302_init();
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 6   
+
+ 304   2                      display_cache[0]=hour/10;
+ 305   2                      display_cache[1]=hour%10;
+ 306   2                      display_cache[2]=13;
+ 307   2                      display_cache[3]=minute/10;
+ 308   2                      display_cache[4]=minute%10;
+ 309   2                      display_cache[5]=13;
+ 310   2                      display_cache[6]=second/10;
+ 311   2                      display_cache[7]=second%10;
+ 312   2                      set_hour         = hour;
+ 313   2                      set_minute       = minute;
+ 314   2                      set_second       = second;
+ 315   2              }
+ 316   1              if(test_start&&(test_start_state == 0)&&(set_flag != 0))
+ 317   1              {
+ 318   2                      display_cache[0]=set_hour/10;
+ 319   2                      display_cache[1]=set_hour%10;
+ 320   2                      display_cache[2]=13;
+ 321   2                      display_cache[3]=set_minute/10;
+ 322   2                      display_cache[4]=set_minute%10;
+ 323   2                      display_cache[5]=13;
+ 324   2                      display_cache[6]=set_second/10;
+ 325   2                      display_cache[7]=set_second%10;
+ 326   2              }
+ 327   1              else if((test_start == 0)&&(test_start_state == 0)&&(set_flag == 1))
+ 328   1              {
+ 329   2                      display_cache[0]=10;
+ 330   2                      display_cache[1]=10;
+ 331   2                      display_cache[2]=13;
+ 332   2                      display_cache[3]=set_minute/10;
+ 333   2                      display_cache[4]=set_minute%10;
+ 334   2                      display_cache[5]=13;
+ 335   2                      display_cache[6]=set_second/10;
+ 336   2                      display_cache[7]=set_second%10;
+ 337   2              }
+ 338   1              else if((test_start == 0)&&(test_start_state == 0)&&(set_flag == 2))
+ 339   1              {
+ 340   2                      display_cache[0]=set_hour/10;
+ 341   2                      display_cache[1]=set_hour%10;
+ 342   2                      display_cache[2]=13;
+ 343   2                      display_cache[3]=10;
+ 344   2                      display_cache[4]=10;
+ 345   2                      display_cache[5]=13;
+ 346   2                      display_cache[6]=set_second/10;
+ 347   2                      display_cache[7]=set_second%10;
+ 348   2              }
+ 349   1              else if((test_start == 0)&&(test_start_state == 0)&&(set_flag == 3))
+ 350   1              {
+ 351   2                      display_cache[0]=set_hour/10;
+ 352   2                      display_cache[1]=set_hour%10;
+ 353   2                      display_cache[2]=13;
+ 354   2                      display_cache[3]=set_minute/10;
+ 355   2                      display_cache[4]=set_minute%10;
+ 356   2                      display_cache[5]=13;
+ 357   2                      display_cache[6]=10;
+ 358   2                      display_cache[7]=10;
+ 359   2              }
+ 360   1              if(test_start&&test_start_state&&(set_flag == 1))
+ 361   1              {
+ 362   2                      display_cache[0]=10;
+ 363   2                      display_cache[1]=10;
+ 364   2                      display_cache[2]=10;
+ 365   2                      display_cache[3]=10;
+C51 COMPILER V9.00   MAIN                                                                  11/09/2019 02:09:27 PAGE 7   
+
+ 366   2                      display_cache[4]=10;
+ 367   2                      display_cache[5]=10;
+ 368   2                      display_cache[6]=10;
+ 369   2                      display_cache[7]=10;
+ 370   2              }
+ 371   1              if((test_start == 0)&&test_start_state&&(set_flag == 1))
+ 372   1              {
+ 373   2                      display_cache[0]=10;
+ 374   2                      display_cache[1]=10;
+ 375   2                      display_cache[2]=10;
+ 376   2                      display_cache[3]=10;
+ 377   2                      display_cache[4]=10;
+ 378   2                      display_cache[5]= CSB_dat_Warning /100;
+ 379   2                      display_cache[6]= CSB_dat_Warning /10 %10;
+ 380   2                      display_cache[7]= CSB_dat_Warning %10;
+ 381   2              }
+ 382   1                              
+ 383   1      }
+ 384          void Delay5ms()         //@11.0592MHz
+ 385          {
+ 386   1              unsigned char i, j;
+ 387   1      
+ 388   1              i = 54;
+ 389   1              j = 199;
+ 390   1              do
+ 391   1              {
+ 392   2                      while (--j);
+ 393   2              } while (--i);
+ 394   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1426    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     20    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
